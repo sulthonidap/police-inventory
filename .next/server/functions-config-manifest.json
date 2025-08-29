@@ -1,1 +1,1 @@
-{"version":1,"functions":{"/api/admin/setup":{},"/api/auth/register":{},"/api/assets/[id]":{},"/api/auth/[...nextauth]":{},"/api/assets":{},"/api/polda/[id]":{},"/api/users/[id]/reset-password":{},"/api/polres/[id]":{},"/api/users":{}}}
+{"version":1,"functions":{"/api/assets/[id]":{},"/api/auth/[...nextauth]":{},"/api/categories":{},"/api/admin/setup":{},"/api/assets":{},"/api/polda/[id]":{},"/api/polres/[id]":{},"/api/auth/register":{},"/api/users":{},"/api/users/[id]/reset-password":{}}}
