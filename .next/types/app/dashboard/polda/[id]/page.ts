@@ -1,4 +1,4 @@
-// File: C:\Users\sulth\Documents\work\NEXTJS\Police inventory\src\app\dashboard\polda\[id]\page.tsx
+// File: C:\Users\sulth\Documents\work\police-inventory\src\app\dashboard\polda\[id]\page.tsx
 import * as entry from '../../../../../../src/app/dashboard/polda/[id]/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

@@ -7,7 +7,7 @@ export const runtime = 'nodejs'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check authentication
@@ -21,7 +21,7 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
-    const { id } = params
+    const { id } = await context.params
 
     const polda = await prisma.polda.findUnique({
       where: { id },
@@ -56,11 +56,12 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const body = await request.json()
     const { name, address, phone } = body
+    const { id } = await context.params
 
     if (!name) {
       return NextResponse.json(
@@ -71,7 +72,7 @@ export async function PATCH(
 
     // Check if polda exists
     const existingPolda = await prisma.polda.findUnique({
-      where: { id: params.id }
+      where: { id }
     })
 
     if (!existingPolda) {
@@ -85,7 +86,7 @@ export async function PATCH(
     const duplicatePolda = await prisma.polda.findFirst({
       where: {
         name: name,
-        id: { not: params.id }
+        id: { not: id }
       }
     })
 
@@ -97,7 +98,7 @@ export async function PATCH(
     }
 
     const updatedPolda = await prisma.polda.update({
-      where: { id: params.id },
+      where: { id },
       data: { name, address, phone },
       include: {
         _count: {
@@ -120,12 +121,14 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await context.params
+    
     // Check if polda exists
     const existingPolda = await prisma.polda.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         _count: {
           select: {
@@ -151,7 +154,7 @@ export async function DELETE(
     }
 
     await prisma.polda.delete({
-      where: { id: params.id }
+      where: { id }
     })
 
     return NextResponse.json({ message: 'Polda berhasil dihapus' })

@@ -8,9 +8,11 @@ export async function createReport(formData: FormData) {
     const title = formData.get("title") as string
     const content = formData.get("content") as string
     const polresId = formData.get("polresId") as string
-    const createdBy = formData.get("createdBy") as string
+    const userId = formData.get("userId") as string
+    const type = formData.get("type") as string || "GENERAL"
+    const description = formData.get("description") as string || content
 
-    if (!title || !content || !polresId || !createdBy) {
+    if (!title || !content || !polresId || !userId) {
       return { error: "Semua field harus diisi" }
     }
 
@@ -19,7 +21,9 @@ export async function createReport(formData: FormData) {
         title,
         content,
         polresId,
-        createdBy
+        userId,
+        type: type as any,
+        description
       }
     })
 

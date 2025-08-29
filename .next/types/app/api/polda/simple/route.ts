@@ -1,4 +1,4 @@
-// File: C:\Users\sulth\Documents\work\NEXTJS\Police inventory\src\app\api\polda\simple\route.ts
+// File: C:\Users\sulth\Documents\work\police-inventory\src\app\api\polda\simple\route.ts
 import * as entry from '../../../../../../src/app/api/polda/simple/route.js'
 import type { NextRequest } from 'next/server.js'
 

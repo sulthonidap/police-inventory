@@ -1,4 +1,4 @@
-// File: C:\Users\sulth\Documents\work\NEXTJS\Police inventory\src\app\api\users\route.ts
+// File: C:\Users\sulth\Documents\work\police-inventory\src\app\api\users\route.ts
 import * as entry from '../../../../../src/app/api/users/route.js'
 import type { NextRequest } from 'next/server.js'
 

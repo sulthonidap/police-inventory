@@ -3,14 +3,48 @@ import { prisma } from "@/lib/prisma"
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    await prisma.user.delete({
-      where: { id: params.id }
+    const { id } = await context.params
+
+    // Check if user exists
+    const existingUser = await prisma.user.findUnique({
+      where: { id }
     })
 
-    return NextResponse.json({ message: 'User deleted successfully' })
+    if (!existingUser) {
+      return NextResponse.json(
+        { error: 'User tidak ditemukan' },
+        { status: 404 }
+      )
+    }
+
+    // Check if user has associated assets or reports
+    const userWithRelations = await prisma.user.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: {
+            assets: true,
+            reports: true,
+          },
+        },
+      },
+    })
+
+    if (userWithRelations!._count.assets > 0 || userWithRelations!._count.reports > 0) {
+      return NextResponse.json(
+        { error: 'Tidak dapat menghapus User yang memiliki Asset atau Report terkait' },
+        { status: 400 }
+      )
+    }
+
+    await prisma.user.delete({
+      where: { id }
+    })
+
+    return NextResponse.json({ message: 'User berhasil dihapus' })
   } catch (error) {
     console.error('Error deleting user:', error)
     return NextResponse.json(

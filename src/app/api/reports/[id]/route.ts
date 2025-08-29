@@ -3,37 +3,49 @@ import { prisma } from "@/lib/prisma"
 
 export async function GET(
   request: NextRequest,
-  params: Promise<{ id: string }>
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params
+    const { id } = await context.params
+
     const report = await prisma.report.findUnique({
       where: { id },
       include: {
         user: {
           select: {
+            id: true,
             name: true,
-            nrp: true
-          }
+            email: true,
+            nrp: true,
+          },
         },
         polres: {
           select: {
             id: true,
-            name: true
-          }
-        }
-      }
+            name: true,
+            polda: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
     })
 
     if (!report) {
-      return NextResponse.json({ error: "Laporan tidak ditemukan" }, { status: 404 })
+      return NextResponse.json(
+        { error: "Report tidak ditemukan" },
+        { status: 404 }
+      )
     }
 
     return NextResponse.json(report)
-  } catch (error: any) {
-    console.error('Error fetching report:', error)
+  } catch (error) {
+    console.error("Error fetching report:", error)
     return NextResponse.json(
-      { error: 'Failed to fetch report', detail: String(error?.message || error) },
+      { error: "Failed to fetch report" },
       { status: 500 }
     )
   }
@@ -41,81 +53,104 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  params: Promise<{ id: string }>
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params
-    const contentType = request.headers.get("content-type") || ""
+    const body = await request.json()
+    const { 
+      title, 
+      description, 
+      type, 
+      status, 
+      polresId
+    } = body
+    const { id } = await context.params
 
-    let title: string | null = null
-    let type: string | null = null
-    let description: string | null = null
-    let polresId: string | null = null
-    let status: string | null = null
-
-    if (contentType.includes("application/json")) {
-      const body = await request.json()
-      title = body.title ?? null
-      type = body.type ?? null
-      description = body.description ?? null
-      polresId = body.polresId ?? null
-      status = body.status ?? null
-    } else {
-      const form = await request.formData()
-      title = (form.get("title") as string) || null
-      type = (form.get("type") as string) || null
-      description = (form.get("description") as string) || null
-      polresId = (form.get("polresId") as string) || null
-      status = (form.get("status") as string) || null
+    if (!title) {
+      return NextResponse.json(
+        { error: 'Judul report harus diisi' },
+        { status: 400 }
+      )
     }
 
-    if (!title || !type || !description) {
-      return NextResponse.json({ error: "Judul, tipe, dan deskripsi harus diisi" }, { status: 400 })
+    if (!type) {
+      return NextResponse.json(
+        { error: 'Tipe report harus dipilih' },
+        { status: 400 }
+      )
     }
 
-    // Get current user from session (you'll need to implement this based on your auth system)
-    // For now, we'll use the first available user or get from request
-    const firstUser = await prisma.user.findFirst({
-      select: { id: true }
+    if (!status) {
+      return NextResponse.json(
+        { error: 'Status report harus dipilih' },
+        { status: 400 }
+      )
+    }
+
+    // Check if report exists
+    const existingReport = await prisma.report.findUnique({
+      where: { id }
     })
-    
-    if (!firstUser) {
-      return NextResponse.json({ error: "Tidak ada user yang tersedia" }, { status: 400 })
+
+    if (!existingReport) {
+      return NextResponse.json(
+        { error: 'Report tidak ditemukan' },
+        { status: 404 }
+      )
     }
-    
-    const userId = firstUser.id
+
+    // Check if polres exists (if provided)
+    if (polresId) {
+      const polres = await prisma.polres.findUnique({
+        where: { id: polresId }
+      })
+
+      if (!polres) {
+        return NextResponse.json(
+          { error: 'Polres tidak ditemukan' },
+          { status: 404 }
+        )
+      }
+    }
 
     const updatedReport = await prisma.report.update({
       where: { id },
       data: {
         title,
-        type: type as any,
         description,
-        content: description, // Use description as content for now
-        status: status ? (status as any) : undefined,
-        polresId: polresId || undefined
+        type,
+        status,
+        polresId: polresId || null,
       },
       include: {
         user: {
           select: {
+            id: true,
             name: true,
-            nrp: true
-          }
+            email: true,
+            nrp: true,
+          },
         },
         polres: {
           select: {
             id: true,
-            name: true
-          }
-        }
+            name: true,
+            polda: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
       }
     })
 
-    return NextResponse.json({ success: "Laporan berhasil diperbarui", report: updatedReport })
-  } catch (error: any) {
+    return NextResponse.json(updatedReport)
+  } catch (error) {
     console.error('Error updating report:', error)
     return NextResponse.json(
-      { error: 'Terjadi kesalahan saat memperbarui laporan', detail: String(error?.message || error) },
+      { error: 'Failed to update report' },
       { status: 500 }
     )
   }
@@ -123,10 +158,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  params: Promise<{ id: string }>
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params
+    const { id } = await context.params
     
     // Check if report exists
     const existingReport = await prisma.report.findUnique({
@@ -134,15 +169,21 @@ export async function DELETE(
     })
 
     if (!existingReport) {
-      return NextResponse.json({ error: "Laporan tidak ditemukan" }, { status: 404 })
+      return NextResponse.json(
+        { error: 'Report tidak ditemukan' },
+        { status: 404 }
+      )
     }
 
-    await prisma.report.delete({ where: { id } })
-    return NextResponse.json({ success: "Laporan berhasil dihapus" })
-  } catch (error: any) {
+    await prisma.report.delete({
+      where: { id }
+    })
+
+    return NextResponse.json({ message: 'Report berhasil dihapus' })
+  } catch (error) {
     console.error('Error deleting report:', error)
     return NextResponse.json(
-      { error: 'Terjadi kesalahan saat menghapus laporan', detail: String(error?.message || error) },
+      { error: 'Failed to delete report' },
       { status: 500 }
     )
   }

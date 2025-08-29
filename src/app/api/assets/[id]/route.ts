@@ -1,29 +1,52 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
+
+export const runtime = 'nodejs'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params
+    // Check authentication
+    const session = await getServerSession(authOptions)
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const { id } = await context.params
+
     const asset = await prisma.asset.findUnique({
       where: { id },
       include: {
-        polres: { 
-          select: { 
-            id: true, 
-            name: true
-          } 
+        categoryRef: {
+          select: {
+            id: true,
+            name: true,
+          },
         },
-        user: { 
-          select: { 
-            id: true, 
-            name: true, 
-            nrp: true 
-          } 
-        }
-      }
+        polres: {
+          select: {
+            id: true,
+            name: true,
+            polda: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
     })
 
     if (!asset) {
@@ -34,10 +57,10 @@ export async function GET(
     }
 
     return NextResponse.json(asset)
-  } catch (error: any) {
-    console.error('Error fetching asset:', error)
+  } catch (error) {
+    console.error("Error fetching asset:", error)
     return NextResponse.json(
-      { error: 'Gagal mengambil data asset', detail: String(error?.message || error) },
+      { error: "Failed to fetch asset" },
       { status: 500 }
     )
   }
@@ -45,93 +68,153 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const contentType = request.headers.get("content-type") || ""
+    const body = await request.json()
+    const { name, categoryId, polresId, userId, status, kind, categoryLevel1, categoryLevel2, categoryLevel3, source, inventoryNumber, year, poldaId, qrData } = body
+    const { id } = await context.params
 
-    // Fields
-    let name: string | null = null
-    let category: string | null = null
-    let status: string | null = null
-    let polresId: string | null = null
-    let assignedTo: string | null = null
-    let kind: string | null = null
-    let categoryLevel1: string | null = null
-    let categoryLevel2: string | null = null
-    let categoryLevel3: string | null = null
-    let source: string | null = null
-    let inventoryNumber: string | null = null
-    let year: string | null = null
-    let poldaId: string | null = null
-    let qrData: string | null = null
-
-    if (contentType.includes("application/json")) {
-      const body = await request.json()
-      name = body.name ?? null
-      category = body.category ?? null
-      status = body.status ?? null
-      polresId = body.polresId ?? null
-      assignedTo = body.assignedTo ?? null
-      kind = body.kind ?? null
-      categoryLevel1 = body.categoryLevel1 ?? null
-      categoryLevel2 = body.categoryLevel2 ?? null
-      categoryLevel3 = body.categoryLevel3 ?? null
-      source = body.source ?? null
-      inventoryNumber = body.inventoryNumber ?? null
-      year = body.year ?? null
-      poldaId = body.poldaId ?? null
-      qrData = body.qrData ?? null
-    } else {
-      const form = await request.formData()
-      name = (form.get("name") as string) || null
-      category = (form.get("category") as string) || null
-      status = (form.get("status") as string) || null
-      polresId = (form.get("polresId") as string) || null
-      assignedTo = (form.get("assignedTo") as string) || null
-      kind = (form.get("kind") as string) || null
-      categoryLevel1 = (form.get("categoryLevel1") as string) || null
-      categoryLevel2 = (form.get("categoryLevel2") as string) || null
-      categoryLevel3 = (form.get("categoryLevel3") as string) || null
-      source = (form.get("source") as string) || null
-      inventoryNumber = (form.get("inventoryNumber") as string) || null
-      poldaId = (form.get("poldaId") as string) || null
-      qrData = (form.get("qrData") as string) || null
-    }
-
-    const { id } = await params
-    
-    if (!name || !polresId) {
+    if (!name) {
       return NextResponse.json(
-        { error: "Nama dan Polres harus diisi" },
+        { error: 'Nama asset harus diisi' },
         { status: 400 }
       )
     }
 
-    const asset = await prisma.asset.update({
-      where: { id },
-             data: {
-         name,
-         category: (category as any) || undefined,
-         status: (status as any) || undefined,
-         polresId,
-         assignedTo,
-                 source: (source as any) || undefined,
-        inventoryNumber: inventoryNumber || undefined,
-        year: year ? parseInt(year) : undefined,
-        poldaId: poldaId || undefined,
-        qrData: qrData || undefined
-       }
+    if (!categoryId) {
+      return NextResponse.json(
+        { error: 'Kategori harus dipilih' },
+        { status: 400 }
+      )
+    }
+
+    if (!polresId) {
+      return NextResponse.json(
+        { error: 'Polres harus dipilih' },
+        { status: 400 }
+      )
+    }
+
+    // Check if asset exists
+    const existingAsset = await prisma.asset.findUnique({
+      where: { id }
     })
 
-    return NextResponse.json({ 
-      success: "Asset berhasil diperbarui",
-      asset
+    if (!existingAsset) {
+      return NextResponse.json(
+        { error: 'Asset tidak ditemukan' },
+        { status: 404 }
+      )
+    }
+
+    // Check if category exists
+    const category = await prisma.category.findUnique({
+      where: { id: categoryId }
     })
-  } catch (error: any) {
+
+    if (!category) {
+      return NextResponse.json(
+        { error: 'Kategori tidak ditemukan' },
+        { status: 404 }
+      )
+    }
+
+    // Check if polres exists
+    const polres = await prisma.polres.findUnique({
+      where: { id: polresId }
+    })
+
+    if (!polres) {
+      return NextResponse.json(
+        { error: 'Polres tidak ditemukan' },
+        { status: 404 }
+      )
+    }
+
+    // Check if user exists (if provided)
+    if (userId) {
+      const user = await prisma.user.findUnique({
+        where: { id: userId }
+      })
+
+      if (!user) {
+        return NextResponse.json(
+          { error: 'User tidak ditemukan' },
+          { status: 404 }
+        )
+      }
+    }
+
+    // Check if inventory number is unique (if provided)
+    if (inventoryNumber) {
+      const duplicateAsset = await prisma.asset.findFirst({
+        where: {
+          inventoryNumber: inventoryNumber,
+          id: { not: id }
+        }
+      })
+
+      if (duplicateAsset) {
+        return NextResponse.json(
+          { error: 'Inventory number sudah digunakan oleh asset lain' },
+          { status: 400 }
+        )
+      }
+    }
+
+    const updatedAsset = await prisma.asset.update({
+      where: { id },
+      data: {
+        name,
+        categoryId,
+        polresId,
+        assignedTo: userId || null,
+        status,
+        kind,
+        categoryLevel1,
+        categoryLevel2,
+        categoryLevel3,
+        source,
+        inventoryNumber,
+        year: year ? parseInt(year) : null,
+        poldaId,
+        qrData,
+      },
+      include: {
+        categoryRef: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        polres: {
+          select: {
+            id: true,
+            name: true,
+            polda: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      }
+    })
+
+    return NextResponse.json(updatedAsset)
+  } catch (error) {
     console.error('Error updating asset:', error)
     return NextResponse.json(
-      { error: 'Gagal memperbarui asset', detail: String(error?.message || error) },
+      { error: 'Failed to update asset' },
       { status: 500 }
     )
   }
@@ -139,19 +222,40 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params
+    const { id } = await context.params
+    
+    // Check if asset exists
+    const existingAsset = await prisma.asset.findUnique({
+      where: { id }
+    })
+
+    if (!existingAsset) {
+      return NextResponse.json(
+        { error: 'Asset tidak ditemukan' },
+        { status: 404 }
+      )
+    }
+
+    // Check if asset is assigned to a user
+    if (existingAsset.assignedTo) {
+      return NextResponse.json(
+        { error: 'Tidak dapat menghapus Asset yang sedang digunakan oleh User' },
+        { status: 400 }
+      )
+    }
+
     await prisma.asset.delete({
       where: { id }
     })
 
-    return NextResponse.json({ success: "Asset berhasil dihapus" })
-  } catch (error: any) {
+    return NextResponse.json({ message: 'Asset berhasil dihapus' })
+  } catch (error) {
     console.error('Error deleting asset:', error)
     return NextResponse.json(
-      { error: 'Gagal menghapus asset', detail: String(error?.message || error) },
+      { error: 'Failed to delete asset' },
       { status: 500 }
     )
   }

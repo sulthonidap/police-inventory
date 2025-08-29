@@ -3,27 +3,40 @@ import { prisma } from "@/lib/prisma"
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await prisma.user.update({
-      where: { id: params.id },
-      data: { status: 'REJECTED' },
-      include: {
-        polres: {
-          select: {
-            name: true,
-            polda: {
-              select: {
-                name: true
-              }
-            }
-          }
-        }
-      }
+    const { id } = await context.params
+
+    // Check if user exists and is pending
+    const user = await prisma.user.findUnique({
+      where: { id }
     })
 
-    return NextResponse.json(user)
+    if (!user) {
+      return NextResponse.json(
+        { error: 'User tidak ditemukan' },
+        { status: 404 }
+      )
+    }
+
+    if (user.status !== 'PENDING') {
+      return NextResponse.json(
+        { error: 'User sudah tidak dalam status pending' },
+        { status: 400 }
+      )
+    }
+
+    // Reject user
+    const updatedUser = await prisma.user.update({
+      where: { id },
+      data: { status: 'REJECTED' }
+    })
+
+    return NextResponse.json({
+      message: 'User berhasil ditolak',
+      user: updatedUser
+    })
   } catch (error) {
     console.error('Error rejecting user:', error)
     return NextResponse.json(

@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     let { nrp, name, email, password, role, polresId, poldaId } = body as {
-      nrp: string; name: string; email: string; password: string; role: string; polresId?: string | null; poldaId?: string | null
+      nrp: string; name: string; email: string; password: string; role: "ADMIN" | "KORLANTAS" | "POLDA" | "POLRES" | "USER"; polresId?: string | null; poldaId?: string | null
     }
 
     // Validate required fields

@@ -111,7 +111,6 @@ export function Navbar({ onMenuClick, sidebarCollapsed, onSidebarCollapsedChange
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-10 w-10 rounded-full hover:bg-blue-50/50">
               <Avatar className="h-10 w-10">
-                <AvatarImage src={session?.user?.image || ""} alt={session?.user?.name || ""} />
                 <AvatarFallback className="bg-gradient-to-br from-blue-600 to-blue-800 text-white">
                   {session?.user?.name?.charAt(0) || "U"}
                 </AvatarFallback>
