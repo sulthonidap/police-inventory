@@ -3,7 +3,9 @@ import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 import { generateSecret } from "@/lib/utils"
 
+// Konfigurasi untuk Vercel deployment
 export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
 export async function PATCH(
   request: NextRequest,
