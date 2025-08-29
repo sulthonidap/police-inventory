@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
+export const preferredRegion = 'auto'
 
 // Konfigurasi untuk Vercel deployment
 export const runtime = 'nodejs'

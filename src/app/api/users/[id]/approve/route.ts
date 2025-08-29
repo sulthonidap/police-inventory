@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+export const preferredRegion = 'auto'
 
 // Konfigurasi untuk Vercel deployment
 export const runtime = 'nodejs'

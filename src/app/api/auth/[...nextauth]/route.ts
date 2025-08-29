@@ -1,5 +1,6 @@
 import NextAuth from "next-auth"
 import { authOptions } from "@/lib/auth"
+export const preferredRegion = 'auto'
 
 // Konfigurasi untuk Vercel deployment
 export const runtime = 'nodejs'

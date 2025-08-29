@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 import { generateSecret } from "@/lib/utils"
+export const preferredRegion = 'auto'
 
 // Konfigurasi untuk Vercel deployment
 export const runtime = 'nodejs'

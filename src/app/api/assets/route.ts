@@ -3,11 +3,10 @@ import { prisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 
-// Set runtime untuk Vercel
+// Konfigurasi untuk Vercel deployment
 export const runtime = 'nodejs'
-
-// Disable static generation untuk route ini
 export const dynamic = 'force-dynamic'
+export const preferredRegion = 'auto'
 
 export async function GET(request: NextRequest) {
   try {

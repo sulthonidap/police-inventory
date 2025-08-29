@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 
+// Konfigurasi untuk Vercel deployment
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
+export const preferredRegion = 'auto'
 
 export async function POST(request: NextRequest) {
   try {
