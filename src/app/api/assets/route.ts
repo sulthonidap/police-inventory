@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
-    const type = searchParams.get('type') || undefined
+    const kind = searchParams.get('kind') || undefined
     const q = searchParams.get('q') || undefined
     const polresId = searchParams.get('polresId') || undefined
     const poldaId = searchParams.get('poldaId') || undefined
@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit
 
     const where: any = {}
-    if (type) where.kind = type as any
+    if (kind) where.kind = kind as any
     if (polresId) where.polresId = polresId
     if (poldaId) where.poldaId = poldaId
     if (q) {
@@ -54,7 +54,14 @@ export async function GET(request: NextRequest) {
     const assets = await prisma.asset.findMany({
       where,
       include: {
-        polres: { select: { id: true, name: true } },
+        categoryRef: { select: { id: true, name: true } },
+        polres: { 
+          select: { 
+            id: true, 
+            name: true,
+            polda: { select: { id: true, name: true } }
+          } 
+        },
         user: { select: { id: true, name: true, nrp: true } }
       },
       orderBy: { createdAt: 'desc' },
@@ -90,9 +97,9 @@ export async function POST(request: NextRequest) {
 
     // Fields
     let name: string | null = null
-    let category: string | null = null // legacy enum
+    let categoryId: string | null = null
     let polresId: string | null = null
-    let assignedTo: string | null = null
+    let userId: string | null = null
 
     let kind: string | null = null
     let categoryLevel1: string | null = null
@@ -107,9 +114,9 @@ export async function POST(request: NextRequest) {
     if (contentType.includes("application/json")) {
       const body = await request.json()
       name = body.name ?? null
-      category = body.category ?? null
+      categoryId = body.categoryId ?? null
       polresId = body.polresId ?? null
-      assignedTo = body.assignedTo ?? null
+      userId = body.userId ?? null
 
       kind = body.kind ?? null
       categoryLevel1 = body.categoryLevel1 ?? null
@@ -123,9 +130,9 @@ export async function POST(request: NextRequest) {
     } else {
       const form = await request.formData()
       name = (form.get("name") as string) || null
-      category = (form.get("category") as string) || null
+      categoryId = (form.get("categoryId") as string) || null
       polresId = (form.get("polresId") as string) || null
-      assignedTo = ((form.get("assignedTo") as string) || null) || null
+      userId = (form.get("userId") as string) || null
 
       kind = (form.get("kind") as string) || null
       categoryLevel1 = (form.get("categoryLevel1") as string) || null
@@ -142,18 +149,51 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Nama dan Polres harus diisi" }, { status: 400 })
     }
 
-    // Validate category enum
-    const validCategories = ['KENDARAAN', 'SENJATA', 'PERALATAN', 'KOMPUTER', 'KOMUNIKASI', 'LAINNYA']
-    if (category && !validCategories.includes(category)) {
-      return NextResponse.json({ error: `Kategori tidak valid. Pilih salah satu: ${validCategories.join(', ')}` }, { status: 400 })
+    // Check if polres exists
+    const polres = await prisma.polres.findUnique({
+      where: { id: polresId }
+    })
+    if (!polres) {
+      return NextResponse.json({ error: "Polres tidak ditemukan" }, { status: 400 })
+    }
+
+    // Check if category exists (if provided)
+    if (categoryId) {
+      const category = await prisma.category.findUnique({
+        where: { id: categoryId }
+      })
+      if (!category) {
+        return NextResponse.json({ error: "Kategori tidak ditemukan" }, { status: 400 })
+      }
+    }
+
+    // Check if user exists (if assigned)
+    if (userId) {
+      const user = await prisma.user.findUnique({
+        where: { id: userId }
+      })
+      if (!user) {
+        return NextResponse.json({ error: "User tidak ditemukan" }, { status: 400 })
+      }
+    }
+
+    // Check if inventory number is unique (if provided)
+    if (inventoryNumber) {
+      const duplicateAsset = await prisma.asset.findFirst({
+        where: { inventoryNumber }
+      })
+      if (duplicateAsset) {
+        return NextResponse.json({ error: "Inventory number sudah digunakan" }, { status: 400 })
+      }
     }
 
     const asset = await prisma.asset.create({
       data: {
         name,
-        category: (category || 'LAINNYA') as any,
+        category: "LAINNYA" as any, // Default category enum
+        categoryId,
         polresId,
-        assignedTo,
+        assignedTo: userId,
         status: "ACTIVE",
         kind: (kind as any) || undefined,
         categoryLevel1: categoryLevel1 || undefined,
@@ -164,12 +204,23 @@ export async function POST(request: NextRequest) {
         year: year ? parseInt(year) : undefined,
         poldaId: poldaId || undefined,
         qrData: qrData || undefined
+      },
+      include: {
+        categoryRef: { select: { id: true, name: true } },
+        polres: { 
+          select: { 
+            id: true, 
+            name: true,
+            polda: { select: { id: true, name: true } }
+          } 
+        },
+        user: { select: { id: true, name: true, nrp: true } }
       }
     })
 
     return NextResponse.json({ 
       success: "Asset berhasil ditambahkan",
-      asset: { id: asset.id }
+      asset
     }, { status: 201 })
   } catch (error: any) {
     console.error('Error creating asset:', error)
