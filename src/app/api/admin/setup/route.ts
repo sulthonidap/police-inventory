@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs"
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 export const preferredRegion = 'auto'
+export const maxDuration = 30
 
 export async function POST(request: NextRequest) {
   try {

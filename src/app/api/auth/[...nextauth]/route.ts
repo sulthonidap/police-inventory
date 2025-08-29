@@ -1,10 +1,13 @@
 import NextAuth from "next-auth"
 import { authOptions } from "@/lib/auth"
-export const preferredRegion = 'auto'
+
+// Konfigurasi untuk Vercel deployment
 
 // Konfigurasi untuk Vercel deployment
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
+export const preferredRegion = 'auto'
+export const maxDuration = 30
 
 const handler = NextAuth(authOptions)
 

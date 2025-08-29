@@ -7,6 +7,7 @@ import { authOptions } from "@/lib/auth"
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 export const preferredRegion = 'auto'
+export const maxDuration = 30
 
 export async function GET(request: NextRequest) {
   try {
