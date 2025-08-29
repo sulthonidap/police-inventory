@@ -1,0 +1,9 @@
+{
+  "/api/users/pending-count/route": "app/api/users/pending-count/route.js",
+  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
+  "/login/page": "app/login/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/dashboard/polda/page": "app/dashboard/polda/page.js",
+  "/dashboard/polres/page": "app/dashboard/polres/page.js",
+  "/dashboard/users/page": "app/dashboard/users/page.js"
+}

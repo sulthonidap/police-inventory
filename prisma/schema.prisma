@@ -1,0 +1,241 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String     @id @default(cuid())
+  name          String
+  email         String     @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  nrp           String     @unique
+  role          UserRole   @default(USER)
+  status        UserStatus @default(PENDING)
+  polresId      String?
+  poldaId       String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  account       account[]
+  assets        Asset[]
+  reports       Report[]
+  session       session[]
+  polres        Polres?    @relation(fields: [polresId], references: [id])
+  polda         Polda?     @relation(fields: [poldaId], references: [id])
+
+  @@index([polresId], map: "users_polresId_fkey")
+  @@index([poldaId], map: "users_poldaId_fkey")
+  @@map("users")
+}
+
+model Polda {
+  id        String   @id @default(cuid())
+  name      String
+  address   String?
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  polres    Polres[]
+  users     User[]
+  assets    Asset[]
+  reports   Report[]
+
+  @@map("polda")
+}
+
+model Polres {
+  id        String   @id @default(cuid())
+  name      String
+  address   String?
+  phone     String?
+  poldaId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  assets    Asset[]
+  polda     Polda    @relation(fields: [poldaId], references: [id])
+  reports   Report[]
+  users     User[]
+
+  @@index([poldaId], map: "polres_poldaId_fkey")
+  @@map("polres")
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  kind        AssetKind
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  assets      Asset[]
+
+  @@map("categories")
+}
+
+model Asset {
+  id         String        @id @default(cuid())
+  name       String
+  category   AssetCategory
+  status     AssetStatus   @default(ACTIVE)
+  polresId   String
+  assignedTo String?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  user       User?         @relation(fields: [assignedTo], references: [id])
+  polres     Polres        @relation(fields: [polresId], references: [id])
+  categoryId String?
+  categoryRef Category?    @relation(fields: [categoryId], references: [id])
+
+  // Extended classification and metadata
+  kind               AssetKind?     // DIGITAL or BARANG
+  categoryLevel1     String?        // Jenis utama (kategori 1)
+  categoryLevel2     String?        // Digital / Barang (kategori 2)
+  categoryLevel3     String?        // Aplikasi / Handheld / ETLE Static / dst (kategori 3)
+  source             AssetSource?   // APBN / Hibah / Kerjasama / Lainnya
+  inventoryNumber    String?        // No. Inventaris
+  year               Int?           // Tahun aset
+  poldaId            String?
+  polda              Polda?         @relation(fields: [poldaId], references: [id])
+  qrData             String?        @db.Text
+
+  @@index([assignedTo], map: "assets_assignedTo_fkey")
+  @@index([polresId], map: "assets_polresId_fkey")
+  @@index([poldaId], map: "assets_poldaId_fkey")
+  @@index([categoryId], map: "assets_categoryId_fkey")
+  @@map("assets")
+}
+
+model Report {
+  id          String       @id @default(cuid())
+  title       String
+  type        ReportType
+  customType  String?      // Untuk menyimpan nama tipe kustom
+  status      ReportStatus @default(DRAFT)
+  description String       @db.Text
+  content     String?      @db.Text
+  poldaId     String?
+  polresId    String?
+  userId      String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  user        User         @relation(fields: [userId], references: [id])
+  polda       Polda?       @relation(fields: [poldaId], references: [id])
+  polres      Polres?      @relation(fields: [polresId], references: [id])
+
+  @@index([userId], map: "reports_userId_fkey")
+  @@index([poldaId], map: "reports_poldaId_fkey")
+  @@index([polresId], map: "reports_polresId_fkey")
+  @@map("reports")
+}
+
+model CustomReportType {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  description String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("custom_report_types")
+}
+
+model account {
+  id                String  @id
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  users             User    @relation(fields: [userId], references: [id], onDelete: Cascade, map: "Account_userId_fkey")
+
+  @@unique([provider, providerAccountId], map: "Account_provider_providerAccountId_key")
+  @@index([userId], map: "Account_userId_fkey")
+}
+
+model session {
+  id           String   @id
+  sessionToken String   @unique(map: "Session_sessionToken_key")
+  userId       String
+  expires      DateTime
+  users        User     @relation(fields: [userId], references: [id], onDelete: Cascade, map: "Session_userId_fkey")
+
+  @@index([userId], map: "Session_userId_fkey")
+}
+
+model verificationtoken {
+  identifier String
+  token      String   @unique(map: "VerificationToken_token_key")
+  expires    DateTime
+
+  @@unique([identifier, token], map: "VerificationToken_identifier_token_key")
+}
+
+enum UserRole {
+  ADMIN
+  KORLANTAS
+  POLDA
+  POLRES
+  USER
+}
+
+enum UserStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AssetCategory {
+  KENDARAAN
+  SENJATA
+  PERALATAN
+  KOMPUTER
+  KOMUNIKASI
+  LAINNYA
+}
+
+enum AssetStatus {
+  ACTIVE
+  DAMAGED
+  TRANSFERRED
+  LOST
+  MAINTENANCE
+  RETIRED
+}
+
+enum AssetKind {
+  DIGITAL
+  BARANG
+}
+
+enum AssetSource {
+  APBN
+  HIBAH
+  KERJASAMA
+  LAINNYA
+}
+
+enum ReportType {
+  UMUM
+  INTERNAL
+  CUSTOM
+}
+
+enum ReportStatus {
+  DRAFT
+  SUBMITTED
+  REVIEWED
+  APPROVED
+  REJECTED
+}
