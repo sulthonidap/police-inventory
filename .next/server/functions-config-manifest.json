@@ -1,1 +1,1 @@
-{"version":1,"functions":{"/api/assets/[id]":{},"/api/polres/[id]":{},"/api/polda/[id]":{},"/api/users":{},"/api/users/[id]/reset-password":{}}}
+{"version":1,"functions":{"/api/polda/[id]":{},"/api/assets/[id]":{},"/api/assets":{},"/api/users":{},"/api/polres/[id]":{},"/api/users/[id]/reset-password":{}}}

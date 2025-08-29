@@ -5,6 +5,9 @@ import { authOptions } from "@/lib/auth"
 
 export const runtime = 'nodejs'
 
+// Disable static generation untuk route ini
+export const dynamic = 'force-dynamic'
+
 export async function GET(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }

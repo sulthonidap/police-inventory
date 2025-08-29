@@ -3,6 +3,12 @@ import { prisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 
+// Set runtime untuk Vercel
+export const runtime = 'nodejs'
+
+// Disable static generation untuk route ini
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
     // Check authentication
@@ -84,8 +90,24 @@ export async function GET(request: NextRequest) {
     })
   } catch (error: any) {
     console.error('Error fetching assets:', error)
+    
+    // Handle specific Prisma errors
+    if (error?.code === 'P1001') {
+      return NextResponse.json(
+        { error: 'Database connection failed' },
+        { status: 503 }
+      )
+    }
+    
+    if (error?.code === 'P2002') {
+      return NextResponse.json(
+        { error: 'Database constraint violation' },
+        { status: 400 }
+      )
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to fetch assets', detail: String(error?.message || error) },
+      { error: 'Failed to fetch assets' },
       { status: 500 }
     )
   }
@@ -154,7 +176,7 @@ export async function POST(request: NextRequest) {
       where: { id: polresId }
     })
     if (!polres) {
-      return NextResponse.json({ error: "Polres tidak ditemukan" }, { status: 400 })
+      return NextResponse.json({ error: "Polres tidak ditemukan" }, { status: 404 })
     }
 
     // Check if category exists (if provided)
@@ -163,7 +185,7 @@ export async function POST(request: NextRequest) {
         where: { id: categoryId }
       })
       if (!category) {
-        return NextResponse.json({ error: "Kategori tidak ditemukan" }, { status: 400 })
+        return NextResponse.json({ error: "Kategori tidak ditemukan" }, { status: 404 })
       }
     }
 
@@ -173,7 +195,7 @@ export async function POST(request: NextRequest) {
         where: { id: userId }
       })
       if (!user) {
-        return NextResponse.json({ error: "User tidak ditemukan" }, { status: 400 })
+        return NextResponse.json({ error: "User tidak ditemukan" }, { status: 404 })
       }
     }
 
@@ -224,8 +246,31 @@ export async function POST(request: NextRequest) {
     }, { status: 201 })
   } catch (error: any) {
     console.error('Error creating asset:', error)
+    
+    // Handle specific Prisma errors
+    if (error?.code === 'P1001') {
+      return NextResponse.json(
+        { error: 'Database connection failed' },
+        { status: 503 }
+      )
+    }
+    
+    if (error?.code === 'P2002') {
+      return NextResponse.json(
+        { error: 'Database constraint violation' },
+        { status: 400 }
+      )
+    }
+    
+    if (error?.code === 'P2003') {
+      return NextResponse.json(
+        { error: 'Foreign key constraint failed' },
+        { status: 400 }
+      )
+    }
+    
     return NextResponse.json(
-      { error: 'Terjadi kesalahan saat menambahkan asset', detail: String(error?.message || error) },
+      { error: 'Failed to create asset' },
       { status: 500 }
     )
   }
