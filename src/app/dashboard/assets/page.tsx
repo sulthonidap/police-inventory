@@ -63,6 +63,7 @@ export default function AssetsPage() {
   const [kindFilter, setKindFilter] = useState("all")
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
+  const [isQrLoading, setIsQrLoading] = useState(false)
 
   const [formData, setFormData] = useState({
     name: "",
@@ -154,6 +155,44 @@ export default function AssetsPage() {
     setFormData(prev => ({ ...prev, qrData: dataUrl }))
     setQrPreview(dataUrl)
     setIsQrPreviewOpen(true)
+  }
+
+  const openQrPreview = async (asset: Asset) => {
+    setIsQrLoading(true)
+    setIsQrPreviewOpen(true)
+    
+    try {
+      if (asset.qrData && asset.qrData.startsWith('data:image')) {
+        // Jika sudah ada QR data yang valid, gunakan yang ada
+        setQrPreview(asset.qrData)
+      } else {
+        // Jika belum ada atau tidak valid, generate baru
+        const baseUrl = window.location.origin
+        const assetUrl = `${baseUrl}/asset/${asset.id}`
+        const dataUrl = await QRCode.toDataURL(assetUrl, { 
+          width: 256,
+          margin: 2,
+          color: {
+            dark: '#000000',
+            light: '#FFFFFF'
+          }
+        })
+        
+        // Update asset dengan QR data baru
+        await fetch(`/api/assets/${asset.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ qrData: dataUrl })
+        })
+        
+        setQrPreview(dataUrl)
+      }
+    } catch (error) {
+      console.error('Error generating QR:', error)
+      toast({ title: "Error", description: 'Gagal generate QR Code', variant: 'destructive' })
+    } finally {
+      setIsQrLoading(false)
+    }
   }
 
   const handleAddAsset = async (e: React.FormEvent) => {
@@ -640,7 +679,7 @@ export default function AssetsPage() {
                     size="sm"
                     variant="outline"
                     className="h-7 px-2 text-xs bg-green-600 border-green-200 text-white hover:bg-green-100"
-                    onClick={() => { setQrPreview(asset.qrData || ''); setIsQrPreviewOpen(true) }}
+                    onClick={() => openQrPreview(asset)}
                     title="Lihat QR"
                   >
                     <Eye className="mr-1 h-3 w-3 text-white" />QR
@@ -710,7 +749,7 @@ export default function AssetsPage() {
                             size="sm"
                             variant="outline"
                             className="h-7 px-2 text-xs bg-green-600 border-green-200 text-white hover:bg-green-100"
-                            onClick={() => { setQrPreview(asset.qrData || ''); setIsQrPreviewOpen(true) }}
+                            onClick={() => openQrPreview(asset)}
                             title="Lihat QR"
                           >
                             <Eye className="mr-1 h-3 w-3 text-white" />QR
@@ -948,16 +987,30 @@ export default function AssetsPage() {
             <DialogTitle>QR Code Aset</DialogTitle>
           </DialogHeader>
           <div className="flex flex-col items-center space-y-4">
-            {qrPreview && (
-              <div className="p-4 bg-white rounded-lg">
+            {isQrLoading ? (
+              <div className="p-4 bg-gray-100 rounded-lg border w-48 h-48 flex items-center justify-center">
+                <div className="text-center text-gray-500">
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
+                  <p className="text-sm">Generating QR Code...</p>
+                </div>
+              </div>
+            ) : qrPreview ? (
+              <div className="p-4 bg-white rounded-lg border">
                 <img src={qrPreview} alt="QR Code" className="w-48 h-48 mx-auto" />
+              </div>
+            ) : (
+              <div className="p-4 bg-gray-100 rounded-lg border w-48 h-48 flex items-center justify-center">
+                <div className="text-center text-gray-500">
+                  <p className="text-sm">QR Code tidak tersedia</p>
+                </div>
               </div>
             )}
             <Button
               onClick={downloadQR}
+              disabled={!qrPreview || isQrLoading}
               className="w-full"
             >
-              Download QR Code
+              {isQrLoading ? 'Generating...' : qrPreview ? 'Download QR Code' : 'QR Tidak Tersedia'}
             </Button>
           </div>
         </DialogContent>
