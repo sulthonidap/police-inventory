@@ -123,12 +123,59 @@ export async function POST(request: NextRequest) {
     let polresId: string | null = null
     let userId: string | null = null
 
+    // Section 1: Identitas Aset
     let kind: string | null = null
     let categoryLevel1: string | null = null
+    let inventoryNumber: string | null = null
+    let registrationDate: string | null = null
+
+    // Section 2: Identitas Aset (Wilayah)
+    let sourceRegionId: string | null = null
+    let operationalRegionId: string | null = null
+
+    // Section 3: Data Sumber dan Status Aset
+    let source: string | null = null
+    let sourceDetail: string | null = null
+    let sourceCompanyName: string | null = null
+    let sourceCompanyAddress: string | null = null
+    let sourceCompanyProvince: string | null = null
+    let sourceCompanyRegency: string | null = null
+    let sourceCompanyDistrict: string | null = null
+    let sourceCompanyVillage: string | null = null
+    let sourceCompanyRepName: string | null = null
+    let sourceCompanyRepEmail: string | null = null
+    let sourceCompanyRepPhone: string | null = null
+    
+    // Untuk Pinjam Pakai
+    let loanRegionId: string | null = null
+    let usageRegionId: string | null = null
+    let loanRepName: string | null = null
+    let loanRepEmail: string | null = null
+    let loanRepPhone: string | null = null
+    let loanDocumentFile: string | null = null
+
+    // Section 4: Status Pemeliharaan dan Perawatan
+    let maintenanceStatus: string | null = null
+    let simakData: string[] | null = null
+    let maintenanceCompanyName: string | null = null
+    let maintenanceCompanyAddress: string | null = null
+    let maintenanceCompanyProvince: string | null = null
+    let maintenanceCompanyRegency: string | null = null
+    let maintenanceCompanyDistrict: string | null = null
+    let maintenanceCompanyVillage: string | null = null
+    let maintenanceRepName: string | null = null
+    let maintenanceRepEmail: string | null = null
+    let maintenanceRepPhone: string | null = null
+    let maintenanceValidityDate: string | null = null
+    
+    // Untuk Non-Aktif
+    let inactiveSimakData: string[] | null = null
+    let inactiveSimakInstitution: string | null = null
+    let inactiveReason: string | null = null
+
+    // Legacy fields
     let categoryLevel2: string | null = null
     let categoryLevel3: string | null = null
-    let source: string | null = null
-    let inventoryNumber: string | null = null
     let year: string | null = null
     let poldaId: string | null = null
     let qrData: string | null = null
@@ -140,12 +187,59 @@ export async function POST(request: NextRequest) {
       polresId = body.polresId ?? null
       userId = body.userId ?? null
 
+      // Section 1: Identitas Aset
       kind = body.kind ?? null
       categoryLevel1 = body.categoryLevel1 ?? null
+      inventoryNumber = body.inventoryNumber ?? null
+      registrationDate = body.registrationDate ?? null
+
+      // Section 2: Identitas Aset (Wilayah)
+      sourceRegionId = body.sourceRegionId ?? null
+      operationalRegionId = body.operationalRegionId ?? null
+
+      // Section 3: Data Sumber dan Status Aset
+      source = body.source ?? null
+      sourceDetail = body.sourceDetail ?? null
+      sourceCompanyName = body.sourceCompanyName ?? null
+      sourceCompanyAddress = body.sourceCompanyAddress ?? null
+      sourceCompanyProvince = body.sourceCompanyProvince ?? null
+      sourceCompanyRegency = body.sourceCompanyRegency ?? null
+      sourceCompanyDistrict = body.sourceCompanyDistrict ?? null
+      sourceCompanyVillage = body.sourceCompanyVillage ?? null
+      sourceCompanyRepName = body.sourceCompanyRepName ?? null
+      sourceCompanyRepEmail = body.sourceCompanyRepEmail ?? null
+      sourceCompanyRepPhone = body.sourceCompanyRepPhone ?? null
+      
+      // Untuk Pinjam Pakai
+      loanRegionId = body.loanRegionId ?? null
+      usageRegionId = body.usageRegionId ?? null
+      loanRepName = body.loanRepName ?? null
+      loanRepEmail = body.loanRepEmail ?? null
+      loanRepPhone = body.loanRepPhone ?? null
+      loanDocumentFile = body.loanDocumentFile ?? null
+
+      // Section 4: Status Pemeliharaan dan Perawatan
+      maintenanceStatus = body.maintenanceStatus ?? null
+      simakData = body.simakData ?? null
+      maintenanceCompanyName = body.maintenanceCompanyName ?? null
+      maintenanceCompanyAddress = body.maintenanceCompanyAddress ?? null
+      maintenanceCompanyProvince = body.maintenanceCompanyProvince ?? null
+      maintenanceCompanyRegency = body.maintenanceCompanyRegency ?? null
+      maintenanceCompanyDistrict = body.maintenanceCompanyDistrict ?? null
+      maintenanceCompanyVillage = body.maintenanceCompanyVillage ?? null
+      maintenanceRepName = body.maintenanceRepName ?? null
+      maintenanceRepEmail = body.maintenanceRepEmail ?? null
+      maintenanceRepPhone = body.maintenanceRepPhone ?? null
+      maintenanceValidityDate = body.maintenanceValidityDate ?? null
+      
+      // Untuk Non-Aktif
+      inactiveSimakData = body.inactiveSimakData ?? null
+      inactiveSimakInstitution = body.inactiveSimakInstitution ?? null
+      inactiveReason = body.inactiveReason ?? null
+
+      // Legacy fields
       categoryLevel2 = body.categoryLevel2 ?? null
       categoryLevel3 = body.categoryLevel3 ?? null
-      source = body.source ?? null
-      inventoryNumber = body.inventoryNumber ?? null
       year = body.year ?? null
       poldaId = body.poldaId ?? null
       qrData = body.qrData ?? null
@@ -156,12 +250,59 @@ export async function POST(request: NextRequest) {
       polresId = (form.get("polresId") as string) || null
       userId = (form.get("userId") as string) || null
 
+      // Section 1: Identitas Aset
       kind = (form.get("kind") as string) || null
       categoryLevel1 = (form.get("categoryLevel1") as string) || null
+      inventoryNumber = (form.get("inventoryNumber") as string) || null
+      registrationDate = (form.get("registrationDate") as string) || null
+
+      // Section 2: Identitas Aset (Wilayah)
+      sourceRegionId = (form.get("sourceRegionId") as string) || null
+      operationalRegionId = (form.get("operationalRegionId") as string) || null
+
+      // Section 3: Data Sumber dan Status Aset
+      source = (form.get("source") as string) || null
+      sourceDetail = (form.get("sourceDetail") as string) || null
+      sourceCompanyName = (form.get("sourceCompanyName") as string) || null
+      sourceCompanyAddress = (form.get("sourceCompanyAddress") as string) || null
+      sourceCompanyProvince = (form.get("sourceCompanyProvince") as string) || null
+      sourceCompanyRegency = (form.get("sourceCompanyRegency") as string) || null
+      sourceCompanyDistrict = (form.get("sourceCompanyDistrict") as string) || null
+      sourceCompanyVillage = (form.get("sourceCompanyVillage") as string) || null
+      sourceCompanyRepName = (form.get("sourceCompanyRepName") as string) || null
+      sourceCompanyRepEmail = (form.get("sourceCompanyRepEmail") as string) || null
+      sourceCompanyRepPhone = (form.get("sourceCompanyRepPhone") as string) || null
+      
+      // Untuk Pinjam Pakai
+      loanRegionId = (form.get("loanRegionId") as string) || null
+      usageRegionId = (form.get("usageRegionId") as string) || null
+      loanRepName = (form.get("loanRepName") as string) || null
+      loanRepEmail = (form.get("loanRepEmail") as string) || null
+      loanRepPhone = (form.get("loanRepPhone") as string) || null
+      loanDocumentFile = (form.get("loanDocumentFile") as string) || null
+
+      // Section 4: Status Pemeliharaan dan Perawatan
+      maintenanceStatus = (form.get("maintenanceStatus") as string) || null
+      simakData = form.get("simakData") ? JSON.parse(form.get("simakData") as string) : null
+      maintenanceCompanyName = (form.get("maintenanceCompanyName") as string) || null
+      maintenanceCompanyAddress = (form.get("maintenanceCompanyAddress") as string) || null
+      maintenanceCompanyProvince = (form.get("maintenanceCompanyProvince") as string) || null
+      maintenanceCompanyRegency = (form.get("maintenanceCompanyRegency") as string) || null
+      maintenanceCompanyDistrict = (form.get("maintenanceCompanyDistrict") as string) || null
+      maintenanceCompanyVillage = (form.get("maintenanceCompanyVillage") as string) || null
+      maintenanceRepName = (form.get("maintenanceRepName") as string) || null
+      maintenanceRepEmail = (form.get("maintenanceRepEmail") as string) || null
+      maintenanceRepPhone = (form.get("maintenanceRepPhone") as string) || null
+      maintenanceValidityDate = (form.get("maintenanceValidityDate") as string) || null
+      
+      // Untuk Non-Aktif
+      inactiveSimakData = form.get("inactiveSimakData") ? JSON.parse(form.get("inactiveSimakData") as string) : null
+      inactiveSimakInstitution = (form.get("inactiveSimakInstitution") as string) || null
+      inactiveReason = (form.get("inactiveReason") as string) || null
+
+      // Legacy fields
       categoryLevel2 = (form.get("categoryLevel2") as string) || null
       categoryLevel3 = (form.get("categoryLevel3") as string) || null
-      source = (form.get("source") as string) || null
-      inventoryNumber = (form.get("inventoryNumber") as string) || null
       year = (form.get("year") as string) || null
       poldaId = (form.get("poldaId") as string) || null
       qrData = (form.get("qrData") as string) || null
@@ -217,12 +358,60 @@ export async function POST(request: NextRequest) {
         polresId,
         assignedTo: userId,
         status: "ACTIVE",
+        
+        // Section 1: Identitas Aset
         kind: (kind as any) || undefined,
         categoryLevel1: categoryLevel1 || undefined,
+        inventoryNumber: inventoryNumber || undefined,
+        registrationDate: registrationDate ? new Date(registrationDate) : undefined,
+
+        // Section 2: Identitas Aset (Wilayah)
+        sourceRegionId: sourceRegionId || undefined,
+        operationalRegionId: operationalRegionId || undefined,
+
+        // Section 3: Data Sumber dan Status Aset
+        source: (source as any) || undefined,
+        sourceDetail: sourceDetail || undefined,
+        sourceCompanyName: sourceCompanyName || undefined,
+        sourceCompanyAddress: sourceCompanyAddress || undefined,
+        sourceCompanyProvince: sourceCompanyProvince || undefined,
+        sourceCompanyRegency: sourceCompanyRegency || undefined,
+        sourceCompanyDistrict: sourceCompanyDistrict || undefined,
+        sourceCompanyVillage: sourceCompanyVillage || undefined,
+        sourceCompanyRepName: sourceCompanyRepName || undefined,
+        sourceCompanyRepEmail: sourceCompanyRepEmail || undefined,
+        sourceCompanyRepPhone: sourceCompanyRepPhone || undefined,
+        
+        // Untuk Pinjam Pakai
+        loanRegionId: loanRegionId || undefined,
+        usageRegionId: usageRegionId || undefined,
+        loanRepName: loanRepName || undefined,
+        loanRepEmail: loanRepEmail || undefined,
+        loanRepPhone: loanRepPhone || undefined,
+        loanDocumentFile: loanDocumentFile || undefined,
+
+        // Section 4: Status Pemeliharaan dan Perawatan
+        maintenanceStatus: (maintenanceStatus as any) || undefined,
+        simakData: simakData ? JSON.stringify(simakData) : undefined,
+        maintenanceCompanyName: maintenanceCompanyName || undefined,
+        maintenanceCompanyAddress: maintenanceCompanyAddress || undefined,
+        maintenanceCompanyProvince: maintenanceCompanyProvince || undefined,
+        maintenanceCompanyRegency: maintenanceCompanyRegency || undefined,
+        maintenanceCompanyDistrict: maintenanceCompanyDistrict || undefined,
+        maintenanceCompanyVillage: maintenanceCompanyVillage || undefined,
+        maintenanceRepName: maintenanceRepName || undefined,
+        maintenanceRepEmail: maintenanceRepEmail || undefined,
+        maintenanceRepPhone: maintenanceRepPhone || undefined,
+        maintenanceValidityDate: maintenanceValidityDate ? new Date(maintenanceValidityDate) : undefined,
+        
+        // Untuk Non-Aktif
+        inactiveSimakData: inactiveSimakData ? JSON.stringify(inactiveSimakData) : undefined,
+        inactiveSimakInstitution: inactiveSimakInstitution || undefined,
+        inactiveReason: inactiveReason || undefined,
+
+        // Legacy fields
         categoryLevel2: categoryLevel2 || undefined,
         categoryLevel3: categoryLevel3 || undefined,
-        source: (source as any) || undefined,
-        inventoryNumber: inventoryNumber || undefined,
         year: year ? parseInt(year) : undefined,
         poldaId: poldaId || undefined,
         qrData: qrData || undefined

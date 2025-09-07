@@ -13,10 +13,14 @@ export const maxDuration = 30
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, email, nrp, password, role, poldaId, polresId, reason } = body
+    const { 
+      name, email, nrp, password, role, poldaId, polresId, reason, accountType,
+      companyName, phone, assetTypes, otherAssetType, region, satwil,
+      pangkat, jabatan, isEtleOperator, etleOperatorTypes
+    } = body
 
     // Validation
-    if (!name || !email || !nrp || !password || !role) {
+    if (!name || !email || !nrp || !password || !role || !accountType) {
       return NextResponse.json(
         { error: "Semua field wajib diisi" },
         { status: 400 }
@@ -59,8 +63,21 @@ export async function POST(request: NextRequest) {
         password: hashedPassword,
         role: role as any,
         status: "PENDING",
+        accountType: accountType as any,
         poldaId: poldaId || null,
         polresId: polresId || null,
+        // Fields khusus pihak ketiga
+        companyName: companyName || null,
+        phone: phone || null,
+        assetTypes: assetTypes ? JSON.stringify(assetTypes) : null,
+        otherAssetType: otherAssetType || null,
+        region: region || null,
+        satwil: satwil || null,
+        // Fields khusus anggota
+        pangkat: pangkat || null,
+        jabatan: jabatan || null,
+        isEtleOperator: isEtleOperator || false,
+        etleOperatorTypes: etleOperatorTypes ? JSON.stringify(etleOperatorTypes) : null,
         // Store registration reason in a note or separate field
         // For now, we'll add it to the name temporarily
         // You might want to add a 'registrationReason' field to the User model

@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Plus, FileText, Edit, Trash2, Eye, Download, Loader2, Search } from "lucide-react"
+import { ReportForm } from "@/components/forms/ReportForm"
 import { useToast } from "@/hooks/use-toast"
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
 
@@ -74,6 +75,7 @@ export default function ReportsPage() {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [isCustomTypeModalOpen, setIsCustomTypeModalOpen] = useState(false)
+  const [isTicketModalOpen, setIsTicketModalOpen] = useState(false)
   const [selectedReport, setSelectedReport] = useState<Report | null>(null)
   
   // Filter states
@@ -205,6 +207,63 @@ export default function ReportsPage() {
       }
     } catch (error) {
       toast({ title: "Error", description: "Terjadi kesalahan saat membuat laporan", variant: "destructive" })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleTicketSubmit = async (data: any) => {
+    setIsSubmitting(true)
+    
+    try {
+      // Prepare form data for file upload
+      const formData = new FormData()
+      
+      // Add all form fields
+      formData.append('reportType', data.reportType)
+      formData.append('problemType', data.problemType)
+      formData.append('description', data.description)
+      
+      // Add asset data if available
+      if (data.selectedAsset) {
+        formData.append('assetId', data.selectedAsset.id)
+        formData.append('assetName', data.selectedAsset.name)
+        formData.append('assetInventoryNumber', data.selectedAsset.inventoryNumber)
+      }
+      
+      // Add attachments
+      data.attachments.forEach((file: File, index: number) => {
+        formData.append(`attachment_${index}`, file)
+      })
+      
+      const response = await fetch('/api/reports', {
+        method: 'POST',
+        body: formData
+      })
+      
+      const result = await response.json()
+      
+      if (response.ok) {
+        toast({
+          title: "Sukses",
+          description: "Tiket bantuan berhasil dikirim. Tiket Anda akan segera diproses."
+        })
+        setIsTicketModalOpen(false)
+        fetchReports()
+      } else {
+        toast({
+          title: "Error",
+          description: result.error || "Gagal mengirim tiket bantuan",
+          variant: "destructive"
+        })
+      }
+    } catch (error) {
+      console.error('Error submitting ticket:', error)
+      toast({
+        title: "Error",
+        description: "Terjadi kesalahan saat mengirim tiket bantuan",
+        variant: "destructive"
+      })
     } finally {
       setIsSubmitting(false)
     }
@@ -430,13 +489,33 @@ export default function ReportsPage() {
           <p className="text-muted-foreground">Kelola data laporan dan dokumen</p>
         </div>
 
-        <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-          <DialogTrigger asChild>
-            <Button className="w-full sm:w-auto">
-              <Plus className="mr-2 h-4 w-4" />
-              Buat Laporan
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <Dialog open={isTicketModalOpen} onOpenChange={setIsTicketModalOpen}>
+            <DialogTrigger asChild>
+              <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700">
+                <FileText className="mr-2 h-4 w-4" />
+                Buat Tiket Bantuan
+              </Button>
+            </DialogTrigger>
+            <DialogOverlay className="bg-black/30 backdrop-blur-sm" />
+            <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Buat Tiket Bantuan Aset dan Help Desk Korlantas</DialogTitle>
+              </DialogHeader>
+              <ReportForm 
+                onSubmit={handleTicketSubmit}
+                isSubmitting={isSubmitting}
+              />
+            </DialogContent>
+          </Dialog>
+          
+          <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="w-full sm:w-auto">
+                <Plus className="mr-2 h-4 w-4" />
+                Buat Laporan
+              </Button>
+            </DialogTrigger>
           <DialogOverlay className="bg-black/30 backdrop-blur-sm" />
           <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
@@ -566,6 +645,7 @@ export default function ReportsPage() {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* Filter Section */}

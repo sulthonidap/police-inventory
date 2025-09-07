@@ -118,60 +118,121 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Check authentication
+    const session = await getServerSession(authOptions)
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
     const contentType = request.headers.get("content-type") || ""
 
+    // New report fields
+    let reportType: string | null = null
+    let problemType: string | null = null
+    let description: string | null = null
+    let assetId: string | null = null
+    let assetName: string | null = null
+    let assetInventoryNumber: string | null = null
+
+    // Legacy fields for backward compatibility
     let title: string | null = null
     let type: string | null = null
     let customType: string | null = null
-    let description: string | null = null
     let poldaId: string | null = null
     let polresId: string | null = null
 
     if (contentType.includes("application/json")) {
       const body = await request.json()
+      reportType = body.reportType ?? null
+      problemType = body.problemType ?? null
+      description = body.description ?? null
+      assetId = body.assetId ?? null
+      assetName = body.assetName ?? null
+      assetInventoryNumber = body.assetInventoryNumber ?? null
+      
+      // Legacy fields
       title = body.title ?? null
       type = body.type ?? null
       customType = body.customType ?? null
-      description = body.description ?? null
       poldaId = body.poldaId ?? null
       polresId = body.polresId ?? null
     } else {
       const form = await request.formData()
+      reportType = (form.get("reportType") as string) || null
+      problemType = (form.get("problemType") as string) || null
+      description = (form.get("description") as string) || null
+      assetId = (form.get("assetId") as string) || null
+      assetName = (form.get("assetName") as string) || null
+      assetInventoryNumber = (form.get("assetInventoryNumber") as string) || null
+      
+      // Legacy fields
       title = (form.get("title") as string) || null
       type = (form.get("type") as string) || null
       customType = (form.get("customType") as string) || null
-      description = (form.get("description") as string) || null
       poldaId = (form.get("poldaId") as string) || null
       polresId = (form.get("polresId") as string) || null
     }
 
-    if (!title || !type || !description) {
-      return NextResponse.json({ error: "Judul, tipe, dan deskripsi harus diisi" }, { status: 400 })
+    // Validation
+    if (!reportType || !problemType || !description) {
+      return NextResponse.json({ error: "Jenis laporan, jenis permasalahan, dan deskripsi harus diisi" }, { status: 400 })
     }
 
-    // Get current user from session (you'll need to implement this based on your auth system)
-    // For now, we'll use the first available user or get from request
-    const firstUser = await prisma.user.findFirst({
-      select: { id: true }
-    })
-    
-    if (!firstUser) {
-      return NextResponse.json({ error: "Tidak ada user yang tersedia" }, { status: 400 })
+    // Generate title if not provided
+    if (!title) {
+      const reportTypeNames = {
+        "ASSET_OPERATIONAL": "Tiket Kendala Operasional Aset",
+        "APPLICATION_HELP": "Tiket Bantuan Aplikasi Aset",
+        "GENERAL_ISSUE": "Tiket Bantuan Permasalahan Umum",
+        "OTHER": "Tiket Bantuan Lainnya"
+      }
+      title = `${reportTypeNames[reportType as keyof typeof reportTypeNames] || "Laporan"} - ${problemType}`
     }
-    
-    const userId = firstUser.id
+
+    // Get user's region information
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { 
+        id: true, 
+        polresId: true, 
+        poldaId: true,
+        polres: { select: { poldaId: true } }
+      }
+    })
+
+    if (!user) {
+      return NextResponse.json({ error: "User tidak ditemukan" }, { status: 404 })
+    }
+
+    // Set region based on user's location
+    const finalPolresId = polresId || user.polresId
+    const finalPoldaId = poldaId || user.poldaId || user.polres?.poldaId
+
+    // Create report content with structured data
+    const reportContent = {
+      reportType,
+      problemType,
+      description,
+      asset: assetId ? {
+        id: assetId,
+        name: assetName,
+        inventoryNumber: assetInventoryNumber
+      } : null,
+      attachments: [], // Will be handled separately for file uploads
+      createdAt: new Date().toISOString()
+    }
 
     const report = await prisma.report.create({
       data: {
         title,
-        type: type as any,
-        customType: type === "CUSTOM" ? customType : null,
+        type: "CUSTOM" as any, // Use CUSTOM type for new reports
+        customType: reportType,
         description,
-        content: description, // Use description as content for now
-        status: "DRAFT",
-        userId,
-        poldaId: poldaId || undefined,
-        polresId: polresId || undefined
+        content: JSON.stringify(reportContent),
+        status: "SUBMITTED", // New reports start as SUBMITTED
+        userId: user.id,
+        poldaId: finalPoldaId || undefined,
+        polresId: finalPolresId || undefined
       },
       include: {
         user: {
@@ -194,6 +255,9 @@ export async function POST(request: NextRequest) {
         }
       }
     })
+
+    // TODO: Handle file uploads if needed
+    // For now, we'll just return success
 
     return NextResponse.json({
       success: "Laporan berhasil dibuat",

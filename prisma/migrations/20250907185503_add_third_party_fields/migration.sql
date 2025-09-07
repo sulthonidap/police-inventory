@@ -1,0 +1,7 @@
+-- AlterTable
+ALTER TABLE `users` ADD COLUMN `assetTypes` VARCHAR(191) NULL,
+    ADD COLUMN `companyName` VARCHAR(191) NULL,
+    ADD COLUMN `otherAssetType` VARCHAR(191) NULL,
+    ADD COLUMN `phone` VARCHAR(191) NULL,
+    ADD COLUMN `region` VARCHAR(191) NULL,
+    ADD COLUMN `satwil` VARCHAR(191) NULL;

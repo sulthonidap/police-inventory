@@ -7,6 +7,7 @@ declare module "next-auth" {
       name: string
       email: string
       role: string
+      accountType: string
       polresId: string | null
       poldaId: string | null
     }
@@ -17,6 +18,7 @@ declare module "next-auth" {
     name: string
     email: string
     role: string
+    accountType: string
     polresId: string | null
     poldaId: string | null
   }
@@ -25,6 +27,7 @@ declare module "next-auth" {
 declare module "next-auth/jwt" {
   interface JWT {
     role: string
+    accountType: string
     polresId: string | null
     poldaId: string | null
   }

@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { MoreHorizontal, Plus, Edit, Trash2, Eye } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { createAsset, updateAsset, deleteAsset, getAssets } from "@/lib/actions/assets"
+import { AssetForm } from "@/components/forms/AssetForm"
 import QRCode from "qrcode"
 import { Loader2, Search } from "lucide-react"
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
@@ -192,6 +193,42 @@ export default function AssetsPage() {
       toast({ title: "Error", description: 'Gagal generate QR Code', variant: 'destructive' })
     } finally {
       setIsQrLoading(false)
+    }
+  }
+
+  const handleAddAssetNew = async (data: any) => {
+    setIsSubmitting(true)
+    
+    try {
+      const res = await fetch('/api/assets', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify(data) 
+      })
+      const result = await res.json()
+      if (res.ok) {
+        // Generate QR dengan URL yang benar setelah asset dibuat
+        const baseUrl = window.location.origin
+        const assetUrl = `${baseUrl}/asset/${result.asset.id}`
+        const qrDataUrl = await QRCode.toDataURL(assetUrl, { width: 256 })
+        
+        // Update asset dengan QR data yang benar
+        await fetch(`/api/assets/${result.asset.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...data, qrData: qrDataUrl })
+        })
+        
+        toast({ title: "Sukses", description: result.success })
+        setIsModalOpen(false)
+        fetchAssets()
+      } else {
+        toast({ title: "Error", description: result.error || 'Gagal menambah aset', variant: 'destructive' })
+      }
+    } catch (error) {
+      toast({ title: "Error", description: 'Terjadi kesalahan saat menyimpan aset', variant: 'destructive' })
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -413,157 +450,14 @@ export default function AssetsPage() {
             </Button>
           </DialogTrigger>
           <DialogOverlay className="bg-black/30 backdrop-blur-sm" />
-          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Tambah Aset Baru</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleAddAsset} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nama Aset *</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Masukkan nama aset"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="kind">Jenis Aset *</Label>
-                  <Select value={formData.kind} onValueChange={(value) => setFormData({ ...formData, kind: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih jenis aset" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="DIGITAL">Digital</SelectItem>
-                      <SelectItem value="BARANG">Fisik</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="category">Kategori</Label>
-                  <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih kategori" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="KENDARAAN">Kendaraan</SelectItem>
-                      <SelectItem value="SENJATA">Senjata</SelectItem>
-                      <SelectItem value="PERALATAN">Peralatan</SelectItem>
-                      <SelectItem value="KOMPUTER">Komputer</SelectItem>
-                      <SelectItem value="KOMUNIKASI">Komunikasi</SelectItem>
-                      <SelectItem value="LAINNYA">Lainnya</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="year">Tahun</Label>
-                  <Input
-                    id="year"
-                    type="number"
-                    value={formData.year}
-                    onChange={(e) => setFormData({ ...formData, year: e.target.value })}
-                    placeholder="Tahun"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="source">Sumber</Label>
-                  <Select value={formData.source} onValueChange={(value) => setFormData({ ...formData, source: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih sumber" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="APBN">APBN</SelectItem>
-                      <SelectItem value="HIBAH">Hibah</SelectItem>
-                      <SelectItem value="KERJASAMA">Kerjasama</SelectItem>
-                      <SelectItem value="LAINNYA">Lainnya</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="inventoryNumber">Nomor Inventaris</Label>
-                  <Input
-                    id="inventoryNumber"
-                    value={formData.inventoryNumber}
-                    onChange={(e) => setFormData({ ...formData, inventoryNumber: e.target.value })}
-                    placeholder="Masukkan nomor inventaris"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="polda">Polda</Label>
-                  <Select value={formData.poldaId} onValueChange={(value) => setFormData({ ...formData, poldaId: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih Polda" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {poldas.map((polda) => (
-                        <SelectItem key={polda.id} value={polda.id}>
-                          {polda.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="polres">Polres</Label>
-                  <Select value={formData.polresId} onValueChange={(value) => setFormData({ ...formData, polresId: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih Polres" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {polres.map((polres) => (
-                        <SelectItem key={polres.id} value={polres.id}>
-                          {polres.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="assignedTo">Ditugaskan Kepada</Label>
-                <Select value={formData.assignedTo} onValueChange={(value) => setFormData({ ...formData, assignedTo: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Pilih pengguna" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Tidak ditugaskan</SelectItem>
-                    {users.map((user) => (
-                      <SelectItem key={user.id} value={user.id}>
-                        {user.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
-                  Batal
-                </Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Menyimpan...
-                    </>
-                  ) : (
-                    'Simpan'
-                  )}
-                </Button>
-              </DialogFooter>
-            </form>
+            <AssetForm 
+              onSubmit={handleAddAssetNew}
+              isSubmitting={isSubmitting}
+            />
           </DialogContent>
         </Dialog>
       </div>
