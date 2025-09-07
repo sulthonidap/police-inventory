@@ -8,7 +8,7 @@ export function useAuth(requireAuth = true) {
 
   useEffect(() => {
     if (requireAuth && status === "unauthenticated") {
-      router.push("/auth/signin")
+      router.push("/login")
     }
   }, [status, requireAuth, router])
 

@@ -141,7 +141,7 @@ export function Navbar({ onMenuClick, sidebarCollapsed, onSidebarCollapsedChange
             <DropdownMenuSeparator />
             <DropdownMenuItem 
               className="hover:bg-red-50/50 text-red-600"
-              onClick={() => signOut()}
+              onClick={() => signOut({ callbackUrl: '/login' })}
             >
               <LogOut className="mr-2 h-4 w-4" />
               <span>Log out</span>

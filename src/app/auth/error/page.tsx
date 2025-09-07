@@ -42,7 +42,7 @@ function AuthErrorContent() {
             <p>Error Code: {error || "Unknown"}</p>
           </div>
           <div className="flex flex-col space-y-2">
-            <Link href="/auth/signin">
+            <Link href="/login">
               <Button className="w-full">
                 Coba Login Lagi
               </Button>
