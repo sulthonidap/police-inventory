@@ -218,6 +218,18 @@ model CustomReportType {
   @@map("custom_report_types")
 }
 
+model Harwat {
+  id          String   @id @default(cuid())
+  title       String
+  dateTime    DateTime
+  description String   @db.Text
+  photos      String?  @db.Text // JSON array of photo paths
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("harwat")
+}
+
 model account {
   id                String  @id
   userId            String

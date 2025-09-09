@@ -1,0 +1,7 @@
+{
+  "name": "Super Admin",
+  "email": "superngadmin@example.com",
+  "password": "superngadmin123",
+  "nrp": "SUPER001",
+  "secretKey": "admin-setup-2024"
+}

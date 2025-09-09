@@ -1,0 +1,5 @@
+[33mfd6fdb9[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Fix TypeScript error in admin setup endpoint
+[33mde8c8b0[m FEAT: Tambahkan rute API baru untuk setup admin sederhana dengan validasi dan penanganan kesalahan yang lebih baik
+[33mc37f9c2[m Fix admin setup validation - use select to avoid missing columns
+[33m96ae78b[m Remove accountType from admin setup to fix database compatibility
+[33m2ffce00[m Fix admin setup endpoint - add missing accountType field

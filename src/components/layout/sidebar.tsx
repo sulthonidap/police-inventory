@@ -16,7 +16,9 @@ import {
   Building,
   Shield,
   Settings,
-  X
+  X,
+  Tag,
+  Wrench
 } from "lucide-react"
 
 const menuItems = [
@@ -32,9 +34,25 @@ const menuItems = [
     showBadge: true, // Menandakan item ini bisa menampilkan badge
   },
   {
+    title: "Harwat",
+    href: "/dashboard/harwat",
+    icon: Tag,
+  },
+  {
+    title: "Monitoring Asset",
+    href: "/dashboard/monitoring-asset",
+    icon: Wrench,
+  },
+
+  {
     title: "Assets",
     href: "/dashboard/assets",
     icon: Package,
+  },
+  {
+    title: "BAKTIK",
+    href: "/dashboard/baktik",
+    icon: Shield,
   },
   {
     title: "Reports",
@@ -83,6 +101,10 @@ export const Sidebar = memo(function Sidebar({ onClose, collapsed = false }: Sid
           case "/dashboard/assets":
             return hasPermission(["ADMIN", "KORLANTAS", "POLDA", "POLRES", "USER"])
           case "/dashboard/reports":
+            return hasPermission(["ADMIN", "KORLANTAS", "POLDA", "POLRES", "USER"])
+          case "/dashboard/harwat":
+            return hasPermission(["ADMIN", "KORLANTAS", "POLDA", "POLRES", "USER"])
+          case "/dashboard/monitoring-asset":
             return hasPermission(["ADMIN", "KORLANTAS", "POLDA", "POLRES", "USER"])
           default:
             return true
