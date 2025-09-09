@@ -102,6 +102,7 @@ export async function POST(request: NextRequest) {
         nrp,
         role: 'ADMIN',
         status: 'APPROVED', // Langsung approved
+        accountType: 'ANGGOTA', // Default account type
         createdAt: new Date(),
         updatedAt: new Date()
       }
