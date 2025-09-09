@@ -28,6 +28,11 @@ const menuItems = [
     icon: LayoutDashboard,
   },
   {
+    title: "Admin",
+    href: "/dashboard/admin",
+    icon: Shield,
+  },
+  {
     title: "Users",
     href: "/dashboard/users",
     icon: Users,
@@ -89,25 +94,27 @@ export const Sidebar = memo(function Sidebar({ onClose, collapsed = false }: Sid
   // Memoize filtered menu items separately from badge logic
   const filteredMenuItems = useMemo(() => {
     return menuItems.filter(item => {
-      // Filter menu items based on user role
-      switch (item.href) {
-        case "/dashboard/users":
-          return hasPermission(["ADMIN", "KORLANTAS", "POLDA"])
-        case "/dashboard/polda":
-          return hasPermission(["ADMIN", "KORLANTAS"])
-        case "/dashboard/polres":
-          return hasPermission(["ADMIN", "KORLANTAS", "POLDA"])
-        case "/dashboard/assets":
-          return hasPermission(["ADMIN", "KORLANTAS", "POLDA", "POLRES", "USER"])
-        case "/dashboard/reports":
-          return hasPermission(["ADMIN", "KORLANTAS", "POLDA", "POLRES", "USER"])
-        case "/dashboard/harwat":
-          return hasPermission(["ADMIN", "KORLANTAS", "POLDA", "POLRES", "USER"])
-        case "/dashboard/monitoring-asset":
-          return hasPermission(["ADMIN", "KORLANTAS", "POLDA", "POLRES", "USER"])
-        default:
-          return true
-      }
+        // Filter menu items based on user role
+        switch (item.href) {
+          case "/dashboard/admin":
+            return hasPermission(["ADMIN"])
+          case "/dashboard/users":
+            return hasPermission(["ADMIN", "KORLANTAS", "POLDA"])
+          case "/dashboard/polda":
+            return hasPermission(["ADMIN", "KORLANTAS"])
+          case "/dashboard/polres":
+            return hasPermission(["ADMIN", "KORLANTAS", "POLDA"])
+          case "/dashboard/assets":
+            return hasPermission(["ADMIN", "KORLANTAS", "POLDA", "POLRES", "USER"])
+          case "/dashboard/reports":
+            return hasPermission(["ADMIN", "KORLANTAS", "POLDA", "POLRES", "USER"])
+          case "/dashboard/harwat":
+            return hasPermission(["ADMIN", "KORLANTAS", "POLDA", "POLRES", "USER"])
+          case "/dashboard/monitoring-asset":
+            return hasPermission(["ADMIN", "KORLANTAS", "POLDA", "POLRES", "USER"])
+          default:
+            return true
+        }
     })
   }, [hasPermission])
 

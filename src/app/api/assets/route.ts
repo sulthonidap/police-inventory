@@ -363,7 +363,6 @@ export async function POST(request: NextRequest) {
         kind: (kind as any) || undefined,
         categoryLevel1: categoryLevel1 || undefined,
         inventoryNumber: inventoryNumber || undefined,
-        registrationDate: registrationDate ? new Date(registrationDate) : undefined,
 
         // Section 2: Identitas Aset (Wilayah)
         sourceRegionId: sourceRegionId || undefined,

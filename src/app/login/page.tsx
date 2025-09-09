@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Loader2, Shield, Eye, EyeOff, AlertCircle } from "lucide-react"
+import { Loader2, Shield, Eye, EyeOff, AlertCircle, Plus, UserPlus } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 
@@ -20,6 +20,7 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
+  const [creatingAdmin, setCreatingAdmin] = useState(false)
   const { toast } = useToast()
   const router = useRouter()
 
@@ -63,6 +64,57 @@ export default function LoginPage() {
       })
     } finally {
       setIsSubmitting(false)
+    }
+  }
+
+  const handleCreateAdmin = async () => {
+    setCreatingAdmin(true)
+    
+    try {
+      const adminData = {
+        name: "Test Admin",
+        email: `test-admin-${Date.now()}@polri.go.id`,
+        password: "admin123456",
+        nrp: `TEST${Date.now()}`,
+        secretKey: "admin-setup-2024"
+      }
+
+      const response = await fetch('/api/admin/setup-minimal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(adminData)
+      })
+
+      const result = await response.json()
+
+      if (response.ok) {
+        toast({
+          title: "✅ Admin Created!",
+          description: `Admin berhasil dibuat! Email: ${result.user.email}`,
+        })
+        
+        // Auto-fill login form
+        setFormData({
+          email: result.user.email,
+          password: "admin123456"
+        })
+      } else {
+        toast({
+          title: "❌ Error",
+          description: result.error || "Gagal membuat admin",
+          variant: "destructive"
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "❌ Network Error",
+        description: "Gagal terhubung ke server",
+        variant: "destructive"
+      })
+    } finally {
+      setCreatingAdmin(false)
     }
   }
 
@@ -181,8 +233,31 @@ export default function LoginPage() {
             {/* Divider */}
             
 
+            {/* Test Admin Button */}
+            <div className="mt-6">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCreateAdmin}
+                disabled={creatingAdmin}
+                className="w-full h-10 text-sm bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+              >
+                {creatingAdmin ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating Admin...
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    🚀 Create Test Admin (Auto Login)
+                  </>
+                )}
+              </Button>
+            </div>
+
             {/* Register Link */}
-            <div className="text-center mt-6">
+            <div className="text-center mt-4">
               <p className="text-gray-600">
                 Belum punya akun?{" "}
                 <Link 
@@ -192,6 +267,18 @@ export default function LoginPage() {
                   Daftar di sini
                 </Link>
               </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Existing Admin Credentials */}
+        <Card className="mt-6 bg-blue-50 border-blue-200">
+          <CardContent className="p-4">
+            <h3 className="text-sm font-medium text-blue-800 mb-2">🔑 Existing Admin Credentials</h3>
+            <div className="space-y-1 text-xs text-blue-700">
+              <p><strong>Email:</strong> prod@polri.go.id</p>
+              <p><strong>Password:</strong> admin123456</p>
+              <p className="text-blue-600 mt-2">💡 Click "Create Test Admin" for instant access!</p>
             </div>
           </CardContent>
         </Card>

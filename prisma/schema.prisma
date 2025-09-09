@@ -8,38 +8,35 @@ datasource db {
 }
 
 model User {
-  id            String     @id @default(cuid())
-  name          String
-  email         String     @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?
-  nrp           String     @unique
-  role          UserRole   @default(USER)
-  status        UserStatus @default(PENDING)
-  accountType   AccountType @default(ANGGOTA)
-  polresId      String?
-  poldaId       String?
-  // Fields khusus untuk pihak ketiga
-  companyName   String?
-  phone         String?
-  assetTypes    String? // JSON string untuk array asset types
-  otherAssetType String?
-  region        String?
-  satwil        String?
-  // Fields khusus untuk anggota
-  pangkat       String?
-  jabatan       String?
-  isEtleOperator Boolean? @default(false)
-  etleOperatorTypes String? // JSON string untuk array operator types
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
-  account       account[]
-  assets        Asset[]
-  reports       Report[]
-  session       session[]
-  polres        Polres?    @relation(fields: [polresId], references: [id])
-  polda         Polda?     @relation(fields: [poldaId], references: [id])
+  id                String     @id @default(cuid())
+  name              String
+  email             String     @unique
+  emailVerified     DateTime?
+  image             String?
+  password          String?
+  nrp               String     @unique
+  role              UserRole   @default(USER)
+  status            UserStatus @default(PENDING)
+  polresId          String?
+  poldaId           String?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  assetTypes        String?
+  companyName       String?
+  otherAssetType    String?
+  phone             String?
+  region            String?
+  satwil            String?
+  isEtleOperator    Boolean?   @default(false)
+  jabatan           String?
+  pangkat           String?
+  etleOperatorTypes String?
+  account           account[]
+  assets            Asset[]
+  reports           Report[]
+  session           session[]
+  polda             Polda?     @relation(fields: [poldaId], references: [id])
+  polres            Polres?    @relation(fields: [polresId], references: [id])
 
   @@index([polresId], map: "users_polresId_fkey")
   @@index([poldaId], map: "users_poldaId_fkey")
@@ -53,16 +50,10 @@ model Polda {
   phone     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  assets    Asset[]  @relation("AssetPolda")
   polres    Polres[]
-  users     User[]
   reports   Report[]
-  
-  // New relations for asset regions
-  sourceAssets       Asset[] @relation("AssetSourceRegion")
-  operationalAssets  Asset[] @relation("AssetOperationalRegion")
-  loanAssets         Asset[] @relation("AssetLoanRegion")
-  usageAssets        Asset[] @relation("AssetUsageRegion")
-  assets             Asset[] @relation("AssetPolda")
+  users     User[]
 
   @@map("polda")
 }
@@ -85,102 +76,46 @@ model Polres {
 }
 
 model Category {
-  id          String   @id @default(cuid())
-  name        String   @unique
+  id          String          @id @default(cuid())
+  name        String          @unique
   description String?
-  kind        AssetKind
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  kind        categories_kind
+  isActive    Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
   assets      Asset[]
 
   @@map("categories")
 }
 
 model Asset {
-  id         String        @id @default(cuid())
-  name       String
-  category   AssetCategory
-  status     AssetStatus   @default(ACTIVE)
-  polresId   String
-  assignedTo String?
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
-  user       User?         @relation(fields: [assignedTo], references: [id])
-  polres     Polres        @relation(fields: [polresId], references: [id])
-  categoryId String?
-  categoryRef Category?    @relation(fields: [categoryId], references: [id])
-
-  // Section 1: Identitas Aset
-  kind               AssetKind?     // DIGITAL_IT, BARANG, JASA
-  categoryLevel1     String?        // Kategori aset berdasarkan jenis
-  inventoryNumber    String?        // No. Inventaris
-  registrationDate   DateTime?      // Tanggal pendaftaran aset
-
-  // Section 2: Identitas Aset (Wilayah)
-  sourceRegionId     String?        // Wilayah sumber aset
-  sourceRegion       Polda?         @relation("AssetSourceRegion", fields: [sourceRegionId], references: [id])
-  operationalRegionId String?       // Wilayah operasional aset
-  operationalRegion  Polda?         @relation("AssetOperationalRegion", fields: [operationalRegionId], references: [id])
-
-  // Section 3: Data Sumber dan Status Aset
-  source             AssetSource?   // PENGADAAN, HIBAH, PINJAM_PAKAI, POC, LAINNYA
-  sourceDetail       String?        // Asal pengadaan/hibah/poc/lainnya
-  sourceCompanyName  String?        // Nama perusahaan
-  sourceCompanyAddress String?      // Alamat perusahaan
-  sourceCompanyProvince String?     // Provinsi
-  sourceCompanyRegency String?      // Kabupaten
-  sourceCompanyDistrict String?     // Kecamatan
-  sourceCompanyVillage String?      // Kelurahan/desa
-  sourceCompanyRepName String?      // Nama perwakilan perusahaan
-  sourceCompanyRepEmail String?     // Email perwakilan
-  sourceCompanyRepPhone String?     // No. telp perwakilan
-  
-  // Untuk Pinjam Pakai
-  loanRegionId       String?        // Wilayah pinjam
-  loanRegion         Polda?         @relation("AssetLoanRegion", fields: [loanRegionId], references: [id])
-  usageRegionId      String?        // Wilayah pakai
-  usageRegion        Polda?         @relation("AssetUsageRegion", fields: [usageRegionId], references: [id])
-  loanRepName        String?        // Nama penanggung jawab pinjam pakai
-  loanRepEmail       String?        // Email penanggung jawab
-  loanRepPhone       String?        // No. telp penanggung jawab
-  loanDocumentFile   String?        // File dokumen berita acara pinjam pakai
-
-  // Section 4: Status Pemeliharaan dan Perawatan
-  maintenanceStatus  MaintenanceStatus? // AKTIF, NON_AKTIF
-  simakData          String?        // Data SIMAK (JSON array)
-  maintenanceCompanyName String?    // Nama perusahaan pemegang harwat
-  maintenanceCompanyAddress String? // Alamat perusahaan
-  maintenanceCompanyProvince String? // Provinsi
-  maintenanceCompanyRegency String?  // Kabupaten
-  maintenanceCompanyDistrict String? // Kecamatan
-  maintenanceCompanyVillage String?  // Kelurahan/desa
-  maintenanceRepName String?        // Nama perwakilan perusahaan
-  maintenanceRepEmail String?       // Email perwakilan
-  maintenanceRepPhone String?       // No. telp perwakilan
-  maintenanceValidityDate DateTime? // Tanggal masa berlaku harwat
-  
-  // Untuk Non-Aktif
-  inactiveSimakData  String?        // Data SIMAK untuk non-aktif (JSON array)
-  inactiveSimakInstitution String?  // Aset terdaftar pada SIMAK instansi
-  inactiveReason     String?        // Alasan mengapa aset sudah tidak aktif
-
-  // Legacy fields (untuk kompatibilitas)
-  categoryLevel2     String?        // Digital / Barang (kategori 2)
-  categoryLevel3     String?        // Aplikasi / Handheld / ETLE Static / dst (kategori 3)
-  year               Int?           // Tahun aset
-  poldaId            String?
-  polda              Polda?         @relation("AssetPolda", fields: [poldaId], references: [id])
-  qrData             String?        @db.Text
+  id              String         @id @default(cuid())
+  name            String
+  category        AssetCategory
+  status          AssetStatus    @default(ACTIVE)
+  polresId        String
+  assignedTo      String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  categoryId      String?
+  kind            assets_kind?
+  categoryLevel1  String?
+  categoryLevel2  String?
+  categoryLevel3  String?
+  source          assets_source?
+  inventoryNumber String?
+  year            Int?
+  poldaId         String?
+  qrData          String?        @db.Text
+  user            User?          @relation(fields: [assignedTo], references: [id])
+  categoryRef     Category?      @relation(fields: [categoryId], references: [id])
+  polda           Polda?         @relation("AssetPolda", fields: [poldaId], references: [id])
+  polres          Polres         @relation(fields: [polresId], references: [id])
 
   @@index([assignedTo], map: "assets_assignedTo_fkey")
   @@index([polresId], map: "assets_polresId_fkey")
   @@index([poldaId], map: "assets_poldaId_fkey")
   @@index([categoryId], map: "assets_categoryId_fkey")
-  @@index([sourceRegionId], map: "assets_sourceRegionId_fkey")
-  @@index([operationalRegionId], map: "assets_operationalRegionId_fkey")
-  @@index([loanRegionId], map: "assets_loanRegionId_fkey")
-  @@index([usageRegionId], map: "assets_usageRegionId_fkey")
   @@map("assets")
 }
 
@@ -188,7 +123,7 @@ model Report {
   id          String       @id @default(cuid())
   title       String
   type        ReportType
-  customType  String?      // Untuk menyimpan nama tipe kustom
+  customType  String?
   status      ReportStatus @default(DRAFT)
   description String       @db.Text
   content     String?      @db.Text
@@ -197,9 +132,9 @@ model Report {
   userId      String
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
-  user        User         @relation(fields: [userId], references: [id])
   polda       Polda?       @relation(fields: [poldaId], references: [id])
   polres      Polres?      @relation(fields: [polresId], references: [id])
+  user        User         @relation(fields: [userId], references: [id])
 
   @@index([userId], map: "reports_userId_fkey")
   @@index([poldaId], map: "reports_poldaId_fkey")
@@ -208,12 +143,12 @@ model Report {
 }
 
 model CustomReportType {
-  id        String   @id @default(cuid())
-  name      String   @unique
+  id          String   @id @default(cuid())
+  name        String   @unique
   description String?
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@map("custom_report_types")
 }
@@ -223,9 +158,9 @@ model Harwat {
   title       String
   dateTime    DateTime
   description String   @db.Text
-  photos      String?  @db.Text // JSON array of photo paths
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  photos      String?  @db.Text
 
   @@map("harwat")
 }
@@ -282,11 +217,6 @@ enum UserStatus {
   REJECTED
 }
 
-enum AccountType {
-  ANGGOTA
-  PIHAK_KETIGA
-}
-
 enum AssetCategory {
   KENDARAAN
   SENJATA
@@ -305,25 +235,6 @@ enum AssetStatus {
   RETIRED
 }
 
-enum AssetKind {
-  DIGITAL_IT
-  BARANG
-  JASA
-}
-
-enum AssetSource {
-  PENGADAAN
-  HIBAH
-  PINJAM_PAKAI
-  POC
-  LAINNYA
-}
-
-enum MaintenanceStatus {
-  AKTIF
-  NON_AKTIF
-}
-
 enum ReportType {
   UMUM
   INTERNAL
@@ -336,4 +247,21 @@ enum ReportStatus {
   REVIEWED
   APPROVED
   REJECTED
+}
+
+enum categories_kind {
+  DIGITAL
+  BARANG
+}
+
+enum assets_kind {
+  DIGITAL
+  BARANG
+}
+
+enum assets_source {
+  APBN
+  HIBAH
+  KERJASAMA
+  LAINNYA
 }
