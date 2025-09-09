@@ -2,15 +2,13 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 
-// Konfigurasi untuk Vercel deployment
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
-export const preferredRegion = 'auto'
 export const maxDuration = 30
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🔐 Admin setup request received')
+    console.log('🔐 Simple admin setup request received')
     
     const body = await request.json()
     const { 
@@ -71,7 +69,7 @@ export async function POST(request: NextRequest) {
       }, { status: 503 })
     }
 
-    // Check jika user sudah ada
+    // Check jika user sudah ada - hanya cek email dan nrp
     const existingUser = await prisma.user.findFirst({
       where: { 
         OR: [
@@ -98,7 +96,7 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12)
 
-    // Buat user admin dengan schema minimal
+    // Buat user admin dengan schema minimal - hanya field yang pasti ada
     const adminUser = await prisma.user.create({
       data: {
         name,
@@ -107,16 +105,6 @@ export async function POST(request: NextRequest) {
         nrp,
         role: 'ADMIN',
         status: 'APPROVED'
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        nrp: true,
-        role: true,
-        status: true,
-        createdAt: true,
-        updatedAt: true
       }
     })
 
@@ -134,61 +122,11 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('💥 Error creating admin user:', error)
     
-    // Handle specific Prisma errors
-    if (error?.code === 'P2002') {
-      return NextResponse.json({ 
-        error: 'Email atau NRP sudah terdaftar' 
-      }, { status: 400 })
-    }
-    
-    if (error?.code === 'P1001') {
-      return NextResponse.json({ 
-        error: 'Database connection failed' 
-      }, { status: 503 })
-    }
-
-    if (error?.code === 'P1002') {
-      return NextResponse.json({ 
-        error: 'Database timeout' 
-      }, { status: 503 })
-    }
-    
-    return NextResponse.json({ 
+    // Return error yang lebih detail untuk debugging
+    return NextResponse.json({
       error: 'Terjadi kesalahan saat membuat admin user',
-      details: error instanceof Error ? error.message : 'Unknown error',
-      code: error?.code || 'UNKNOWN'
+      details: error.message,
+      code: error.code || 'UNKNOWN_ERROR'
     }, { status: 500 })
-  } finally {
-    // Close database connection
-    try {
-      await prisma.$disconnect()
-      console.log('✅ Database disconnected')
-    } catch (error) {
-      console.error('❌ Error disconnecting database:', error)
-    }
   }
-}
-
-// GET endpoint untuk info setup
-export async function GET() {
-  return NextResponse.json({
-    message: 'Admin Setup Endpoint',
-    description: 'POST ke endpoint ini untuk membuat user admin yang sudah di-approve',
-    required_fields: {
-      name: 'string - Nama lengkap admin',
-      email: 'string - Email admin (harus unik)',
-      password: 'string - Password minimal 8 karakter',
-      nrp: 'string - NRP admin (harus unik)',
-      secretKey: 'string - Secret key untuk keamanan'
-    },
-    example: {
-      name: "Administrator",
-      email: "admin@police-inventory.com",
-      password: "admin123456",
-      nrp: "ADMIN001",
-      secretKey: "admin-setup-2024"
-    },
-    note: "Secret key default: admin-setup-2024 (bisa diubah via environment variable ADMIN_SETUP_SECRET)",
-    status: "✅ Endpoint ready"
-  })
 }
