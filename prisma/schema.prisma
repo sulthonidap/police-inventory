@@ -4,39 +4,40 @@ generator client {
 
 datasource db {
   provider = "mysql"
-  url      = env("DATABASE_URL")
+  url      = "mysql://police_admin:StrongPassword123!@103.13.206.9:3306/police_inventory"
 }
 
 model User {
-  id                String     @id @default(cuid())
+  id                String            @id @default(cuid())
   name              String
-  email             String     @unique
+  email             String            @unique
   emailVerified     DateTime?
   image             String?
   password          String?
-  nrp               String     @unique
-  role              UserRole   @default(USER)
-  status            UserStatus @default(PENDING)
+  nrp               String            @unique
+  role              UserRole          @default(USER)
+  status            UserStatus        @default(PENDING)
   polresId          String?
   poldaId           String?
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @updatedAt
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
   assetTypes        String?
   companyName       String?
   otherAssetType    String?
   phone             String?
   region            String?
   satwil            String?
-  isEtleOperator    Boolean?   @default(false)
+  isEtleOperator    Boolean?          @default(false)
   jabatan           String?
   pangkat           String?
   etleOperatorTypes String?
+  accountType       users_accountType @default(ANGGOTA)
   account           account[]
   assets            Asset[]
   reports           Report[]
   session           session[]
-  polda             Polda?     @relation(fields: [poldaId], references: [id])
-  polres            Polres?    @relation(fields: [polresId], references: [id])
+  polda             Polda?            @relation(fields: [poldaId], references: [id])
+  polres            Polres?           @relation(fields: [polresId], references: [id])
 
   @@index([polresId], map: "users_polresId_fkey")
   @@index([poldaId], map: "users_poldaId_fkey")
@@ -264,4 +265,9 @@ enum assets_source {
   HIBAH
   KERJASAMA
   LAINNYA
+}
+
+enum users_accountType {
+  ANGGOTA
+  PIHAK_KETIGA
 }

@@ -508,12 +508,7 @@ export default function ReportsPage() {
           </Dialog>
           
           <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="w-full sm:w-auto">
-                <Plus className="mr-2 h-4 w-4" />
-                Buat Laporan
-              </Button>
-            </DialogTrigger>
+            
           <DialogOverlay className="bg-black/30 backdrop-blur-sm" />
           <DialogContent className="sm:max-w-[800px] max-h-[95vh] overflow-y-auto">
             <DialogHeader>

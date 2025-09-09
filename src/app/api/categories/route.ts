@@ -1,39 +1,19 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 
-// Konfigurasi untuk Vercel deployment
-
-// Konfigurasi untuk Vercel deployment
-export const runtime = 'nodejs'
-export const dynamic = 'force-dynamic'
-export const preferredRegion = 'auto'
-export const maxDuration = 30
-
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url)
-    const kind = searchParams.get('kind')
-    const q = searchParams.get('q')
-
-    const where: any = { isActive: true }
-    if (kind) where.kind = kind
-    if (q) {
-      where.OR = [
-        { name: { contains: q } },
-        { description: { contains: q } }
-      ]
-    }
-
     const categories = await prisma.category.findMany({
-      where,
-      orderBy: { name: 'asc' }
+      orderBy: {
+        name: 'asc'
+      }
     })
 
     return NextResponse.json(categories)
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching categories:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch categories', detail: String(error?.message || error) },
+      { error: "Gagal mengambil data kategori" },
       { status: 500 }
     )
   }
@@ -41,53 +21,44 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const contentType = request.headers.get("content-type") || ""
-
-    let name: string | null = null
-    let description: string | null = null
-    let kind: string | null = null
-
-    if (contentType.includes("application/json")) {
-      const body = await request.json()
-      name = body.name ?? null
-      description = body.description ?? null
-      kind = body.kind ?? null
-    } else {
-      const form = await request.formData()
-      name = (form.get("name") as string) || null
-      description = (form.get("description") as string) || null
-      kind = (form.get("kind") as string) || null
-    }
+    const body = await request.json()
+    const { name, kind, description } = body
 
     if (!name || !kind) {
-      return NextResponse.json({ error: "Nama dan jenis kategori harus diisi" }, { status: 400 })
+      return NextResponse.json(
+        { error: "Nama dan jenis kategori harus diisi" },
+        { status: 400 }
+      )
     }
 
-    // Check if category name already exists
-    const existingCategory = await prisma.category.findUnique({
-      where: { name }
+    // Check if category already exists
+    const existingCategory = await prisma.category.findFirst({
+      where: {
+        name: name,
+        kind: kind
+      }
     })
 
     if (existingCategory) {
-      return NextResponse.json({ error: "Nama kategori sudah ada" }, { status: 400 })
+      return NextResponse.json(
+        { error: "Kategori dengan nama dan jenis yang sama sudah ada" },
+        { status: 400 }
+      )
     }
 
     const category = await prisma.category.create({
       data: {
         name,
-        description: description || undefined,
-        kind: kind as any
+        kind,
+        description: description || null
       }
     })
 
-    return NextResponse.json({ 
-      success: "Kategori berhasil ditambahkan",
-      category
-    }, { status: 201 })
-  } catch (error: any) {
+    return NextResponse.json(category, { status: 201 })
+  } catch (error) {
     console.error('Error creating category:', error)
     return NextResponse.json(
-      { error: 'Terjadi kesalahan saat menambahkan kategori', detail: String(error?.message || error) },
+      { error: "Gagal membuat kategori baru" },
       { status: 500 }
     )
   }

@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Loader2, Calendar, MapPin, Building, User, FileText } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { AddCategoryModal } from "./AddCategoryModal"
 
 interface Polda {
   id: string
@@ -160,6 +161,7 @@ export function AssetForm({ onSubmit, isSubmitting = false, initialData }: Asset
   const [poldas, setPoldas] = useState<Polda[]>([])
   const [polres, setPolres] = useState<Polres[]>([])
   const [isLoadingPoldas, setIsLoadingPoldas] = useState(true)
+  const [customCategories, setCustomCategories] = useState<{[key: string]: string[]}>({})
   const { toast } = useToast()
 
   useEffect(() => {
@@ -210,34 +212,50 @@ export function AssetForm({ onSubmit, isSubmitting = false, initialData }: Asset
   }
 
   const getCategoryOptions = (kind: string) => {
-    switch (kind) {
-      case "DIGITAL_IT":
-        return [
-          "Aplikasi Mobile",
-          "Aplikasi Web", 
-          "Platform",
-          "Lainnya sebutkan (permohonan penambahan kategori baru)"
-        ]
-      case "BARANG":
-        return [
-          "Peralatan ETLE",
-          "Kendaraan",
-          "Senjata", 
-          "Komputer",
-          "Server",
-          "Alat komunikasi",
-          "Lainnya sebutkan (permohonan penambahan kategori baru)"
-        ]
-      case "JASA":
-        return [
-          "Jasa Periklanan",
-          "Jasa media dan berita",
-          "Jasa Humas",
-          "Lainnya sebutkan (permohonan penambahan kategori baru)"
-        ]
-      default:
-        return []
+    const baseCategories = {
+      "DIGITAL_IT": [
+        "Aplikasi Mobile",
+        "Aplikasi Web", 
+        "Platform"
+      ],
+      "BARANG": [
+        "Peralatan ETLE",
+        "Kendaraan",
+        "Senjata", 
+        "Komputer",
+        "Server",
+        "Alat komunikasi"
+      ],
+      "JASA": [
+        "Jasa Periklanan",
+        "Jasa media dan berita",
+        "Jasa Humas"
+      ]
     }
+
+    const base = baseCategories[kind as keyof typeof baseCategories] || []
+    const custom = customCategories[kind] || []
+    
+    return [
+      ...base,
+      ...custom,
+      "Lainnya sebutkan (permohonan penambahan kategori baru)"
+    ]
+  }
+
+  const handleCategoryAdded = (newCategory: { name: string; kind: string; description?: string }) => {
+    setCustomCategories(prev => ({
+      ...prev,
+      [newCategory.kind]: [...(prev[newCategory.kind] || []), newCategory.name]
+    }))
+    
+    // Auto-select the new category
+    setFormData(prev => ({ ...prev, categoryLevel1: newCategory.name }))
+    
+    toast({
+      title: "Berhasil",
+      description: `Kategori "${newCategory.name}" berhasil ditambahkan dan dipilih`
+    })
   }
 
   const handleSimakChange = (value: string, checked: boolean) => {
@@ -343,6 +361,13 @@ export function AssetForm({ onSubmit, isSubmitting = false, initialData }: Asset
                   ))}
                 </SelectContent>
               </Select>
+              
+              {formData.categoryLevel1 === "Lainnya sebutkan (permohonan penambahan kategori baru)" && (
+                <AddCategoryModal 
+                  onCategoryAdded={handleCategoryAdded}
+                  triggerKind={formData.kind}
+                />
+              )}
             </div>
           </div>
         </div>

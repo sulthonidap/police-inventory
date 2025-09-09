@@ -34,6 +34,16 @@ const menuItems = [
     showBadge: true, // Menandakan item ini bisa menampilkan badge
   },
   {
+    title: "Assets",
+    href: "/dashboard/assets",
+    icon: Package,
+  },
+  {
+    title: "Reports",
+    href: "/dashboard/reports",
+    icon: FileText,
+  },
+  {
     title: "Harwat",
     href: "/dashboard/harwat",
     icon: Tag,
@@ -45,19 +55,9 @@ const menuItems = [
   },
 
   {
-    title: "Assets",
-    href: "/dashboard/assets",
-    icon: Package,
-  },
-  {
     title: "BAKTIK",
     href: "/dashboard/baktik",
     icon: Shield,
-  },
-  {
-    title: "Reports",
-    href: "/dashboard/reports",
-    icon: FileText,
   },
   {
     title: "Polres",

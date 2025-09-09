@@ -378,7 +378,7 @@ export default function HarwatPage() {
                 
                 {/* Drag & Drop Area */}
                 <div
-                  className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                  className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors relative ${
                     isDragOver
                       ? 'border-blue-500 bg-blue-50'
                       : 'border-gray-300 hover:border-gray-400'
@@ -390,9 +390,9 @@ export default function HarwatPage() {
                   <div className="flex flex-col items-center space-y-2">
                     <Upload className="h-8 w-8 text-gray-400" />
                     <div className="text-sm text-gray-600">
-                      <span className="font-medium text-blue-600 hover:text-blue-500 cursor-pointer">
+                      <label htmlFor="photo" className="font-medium text-blue-600 hover:text-blue-500 cursor-pointer">
                         Klik untuk memilih foto
-                      </span>
+                      </label>
                       {' '}atau drag & drop foto di sini
                     </div>
                     <p className="text-xs text-gray-500">
@@ -401,14 +401,13 @@ export default function HarwatPage() {
                   </div>
                   
                   <Input
-                    id="photos"
+                    id="photo"
                     type="file"
                     accept="image/*"
                     multiple
                     className="hidden"
                     onChange={(e) => handleFileSelect(e.target.files)}
                   />
-                  <label htmlFor="photos" className="absolute inset-0 cursor-pointer" />
                 </div>
 
                 {/* Selected Photos Count */}
@@ -668,7 +667,7 @@ export default function HarwatPage() {
               
               {/* Drag & Drop Area */}
               <div
-                className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors relative ${
                   isDragOver
                     ? 'border-blue-500 bg-blue-50'
                     : 'border-gray-300 hover:border-gray-400'
@@ -680,9 +679,9 @@ export default function HarwatPage() {
                 <div className="flex flex-col items-center space-y-2">
                   <Upload className="h-8 w-8 text-gray-400" />
                   <div className="text-sm text-gray-600">
-                    <span className="font-medium text-blue-600 hover:text-blue-500 cursor-pointer">
+                    <label htmlFor="edit-photo" className="font-medium text-blue-600 hover:text-blue-500 cursor-pointer">
                       Klik untuk menambah foto
-                    </span>
+                    </label>
                     {' '}atau drag & drop foto di sini
                   </div>
                   <p className="text-xs text-gray-500">
@@ -691,14 +690,13 @@ export default function HarwatPage() {
                 </div>
                 
                 <Input
-                  id="edit-photos"
+                  id="edit-photo"
                   type="file"
                   accept="image/*"
                   multiple
                   className="hidden"
                   onChange={(e) => handleFileSelect(e.target.files)}
                 />
-                <label htmlFor="edit-photos" className="absolute inset-0 cursor-pointer" />
               </div>
 
               {/* Selected Photos Count */}
@@ -712,7 +710,7 @@ export default function HarwatPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      setFormData(prev => ({ ...prev, photos: [] }))
+                      setFormData(prev => ({ ...prev, photo: [] }))
                       setPhotoPreviews([])
                     }}
                     className="text-red-600 hover:text-red-700"
