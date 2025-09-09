@@ -105,6 +105,7 @@ export async function POST(request: NextRequest) {
         nrp,
         role: 'ADMIN',
         status: 'APPROVED'
+        // Tidak menggunakan accountType karena mungkin belum ada di database
       }
     })
 
