@@ -359,58 +359,13 @@ export async function POST(request: NextRequest) {
         assignedTo: userId,
         status: "ACTIVE",
         
-        // Section 1: Identitas Aset
+        // Basic fields only (matching current database schema)
         kind: (kind as any) || undefined,
         categoryLevel1: categoryLevel1 || undefined,
-        inventoryNumber: inventoryNumber || undefined,
-
-        // Section 2: Identitas Aset (Wilayah)
-        sourceRegionId: sourceRegionId || undefined,
-        operationalRegionId: operationalRegionId || undefined,
-
-        // Section 3: Data Sumber dan Status Aset
-        source: (source as any) || undefined,
-        sourceDetail: sourceDetail || undefined,
-        sourceCompanyName: sourceCompanyName || undefined,
-        sourceCompanyAddress: sourceCompanyAddress || undefined,
-        sourceCompanyProvince: sourceCompanyProvince || undefined,
-        sourceCompanyRegency: sourceCompanyRegency || undefined,
-        sourceCompanyDistrict: sourceCompanyDistrict || undefined,
-        sourceCompanyVillage: sourceCompanyVillage || undefined,
-        sourceCompanyRepName: sourceCompanyRepName || undefined,
-        sourceCompanyRepEmail: sourceCompanyRepEmail || undefined,
-        sourceCompanyRepPhone: sourceCompanyRepPhone || undefined,
-        
-        // Untuk Pinjam Pakai
-        loanRegionId: loanRegionId || undefined,
-        usageRegionId: usageRegionId || undefined,
-        loanRepName: loanRepName || undefined,
-        loanRepEmail: loanRepEmail || undefined,
-        loanRepPhone: loanRepPhone || undefined,
-        loanDocumentFile: loanDocumentFile || undefined,
-
-        // Section 4: Status Pemeliharaan dan Perawatan
-        maintenanceStatus: (maintenanceStatus as any) || undefined,
-        simakData: simakData ? JSON.stringify(simakData) : undefined,
-        maintenanceCompanyName: maintenanceCompanyName || undefined,
-        maintenanceCompanyAddress: maintenanceCompanyAddress || undefined,
-        maintenanceCompanyProvince: maintenanceCompanyProvince || undefined,
-        maintenanceCompanyRegency: maintenanceCompanyRegency || undefined,
-        maintenanceCompanyDistrict: maintenanceCompanyDistrict || undefined,
-        maintenanceCompanyVillage: maintenanceCompanyVillage || undefined,
-        maintenanceRepName: maintenanceRepName || undefined,
-        maintenanceRepEmail: maintenanceRepEmail || undefined,
-        maintenanceRepPhone: maintenanceRepPhone || undefined,
-        maintenanceValidityDate: maintenanceValidityDate ? new Date(maintenanceValidityDate) : undefined,
-        
-        // Untuk Non-Aktif
-        inactiveSimakData: inactiveSimakData ? JSON.stringify(inactiveSimakData) : undefined,
-        inactiveSimakInstitution: inactiveSimakInstitution || undefined,
-        inactiveReason: inactiveReason || undefined,
-
-        // Legacy fields
         categoryLevel2: categoryLevel2 || undefined,
         categoryLevel3: categoryLevel3 || undefined,
+        inventoryNumber: inventoryNumber || undefined,
+        source: (source as any) || undefined,
         year: year ? parseInt(year) : undefined,
         poldaId: poldaId || undefined,
         qrData: qrData || undefined
