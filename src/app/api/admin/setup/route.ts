@@ -78,6 +78,11 @@ export async function POST(request: NextRequest) {
           { email },
           { nrp }
         ]
+      },
+      select: {
+        id: true,
+        email: true,
+        nrp: true
       }
     })
 
