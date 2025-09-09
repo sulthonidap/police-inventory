@@ -48,6 +48,7 @@ export const authOptions: NextAuthOptions = {
             role: user.role,
             polresId: user.polresId || null,
             poldaId: user.poldaId || null,
+            accountType: "MEMBER" as any, // Add missing field
           }
         } catch (error) {
           console.error("Auth error:", error)
@@ -63,6 +64,7 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.role = user.role
+        token.accountType = user.accountType
         token.polresId = user.polresId || null
         token.poldaId = user.poldaId || null
       }
@@ -72,6 +74,7 @@ export const authOptions: NextAuthOptions = {
       if (token) {
         session.user.id = token.sub!
         session.user.role = token.role as string
+        session.user.accountType = token.accountType as string
         session.user.polresId = token.polresId as string | null
         session.user.poldaId = token.poldaId as string | null
       }

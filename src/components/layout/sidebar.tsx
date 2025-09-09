@@ -28,11 +28,6 @@ const menuItems = [
     icon: LayoutDashboard,
   },
   {
-    title: "Admin",
-    href: "/dashboard/admin",
-    icon: Shield,
-  },
-  {
     title: "Users",
     href: "/dashboard/users",
     icon: Users,
@@ -96,8 +91,6 @@ export const Sidebar = memo(function Sidebar({ onClose, collapsed = false }: Sid
     return menuItems.filter(item => {
         // Filter menu items based on user role
         switch (item.href) {
-          case "/dashboard/admin":
-            return hasPermission(["ADMIN"])
           case "/dashboard/users":
             return hasPermission(["ADMIN", "KORLANTAS", "POLDA"])
           case "/dashboard/polda":
