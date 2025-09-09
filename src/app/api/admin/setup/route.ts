@@ -101,10 +101,7 @@ export async function POST(request: NextRequest) {
         password: hashedPassword,
         nrp,
         role: 'ADMIN',
-        status: 'APPROVED', // Langsung approved
-        accountType: 'ANGGOTA', // Default account type
-        createdAt: new Date(),
-        updatedAt: new Date()
+        status: 'APPROVED' // Langsung approved
       }
     })
 

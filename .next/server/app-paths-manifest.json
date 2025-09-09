@@ -1,17 +1,16 @@
 {
-  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
-  "/api/users/pending-count/route": "app/api/users/pending-count/route.js",
   "/api/users/route": "app/api/users/route.js",
+  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
   "/api/assets/route": "app/api/assets/route.js",
   "/api/reports/route": "app/api/reports/route.js",
   "/api/polres/route": "app/api/polres/route.js",
   "/api/polda/simple/route": "app/api/polda/simple/route.js",
   "/api/polres/simple/route": "app/api/polres/simple/route.js",
-  "/api/polda/route": "app/api/polda/route.js",
-  "/dashboard/polda/page": "app/dashboard/polda/page.js",
+  "/api/users/approved/route": "app/api/users/approved/route.js",
+  "/api/users/pending-count/route": "app/api/users/pending-count/route.js",
   "/dashboard/polres/page": "app/dashboard/polres/page.js",
-  "/dashboard/polda/[id]/page": "app/dashboard/polda/[id]/page.js",
-  "/dashboard/assets/page": "app/dashboard/assets/page.js",
   "/dashboard/page": "app/dashboard/page.js",
+  "/dashboard/assets/page": "app/dashboard/assets/page.js",
+  "/dashboard/polda/page": "app/dashboard/polda/page.js",
   "/dashboard/users/page": "app/dashboard/users/page.js"
 }
