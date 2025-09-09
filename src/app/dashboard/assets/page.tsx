@@ -450,10 +450,8 @@ export default function AssetsPage() {
             </Button>
           </DialogTrigger>
           <DialogOverlay className="bg-black/30 backdrop-blur-sm" />
-          <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Tambah Aset Baru</DialogTitle>
-            </DialogHeader>
+          <DialogContent className="sm:max-w-[1200px] max-h-[95vh] overflow-y-auto">
+            
             <AssetForm 
               onSubmit={handleAddAssetNew}
               isSubmitting={isSubmitting}

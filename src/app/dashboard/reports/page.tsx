@@ -498,10 +498,8 @@ export default function ReportsPage() {
               </Button>
             </DialogTrigger>
             <DialogOverlay className="bg-black/30 backdrop-blur-sm" />
-            <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Buat Tiket Bantuan Aset dan Help Desk Korlantas</DialogTitle>
-              </DialogHeader>
+            <DialogContent className="sm:max-w-[1400px] max-h-[98vh] overflow-y-auto">
+              
               <ReportForm 
                 onSubmit={handleTicketSubmit}
                 isSubmitting={isSubmitting}
@@ -517,7 +515,7 @@ export default function ReportsPage() {
               </Button>
             </DialogTrigger>
           <DialogOverlay className="bg-black/30 backdrop-blur-sm" />
-          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-[800px] max-h-[95vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Buat Laporan Baru</DialogTitle>
             </DialogHeader>

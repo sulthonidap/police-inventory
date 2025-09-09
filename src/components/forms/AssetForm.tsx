@@ -159,41 +159,50 @@ export function AssetForm({ onSubmit, isSubmitting = false, initialData }: Asset
 
   const [poldas, setPoldas] = useState<Polda[]>([])
   const [polres, setPolres] = useState<Polres[]>([])
-  const [filteredPolres, setFilteredPolres] = useState<Polres[]>([])
+  const [isLoadingPoldas, setIsLoadingPoldas] = useState(true)
   const { toast } = useToast()
 
   useEffect(() => {
     fetchPoldas()
-    fetchPolres()
   }, [])
 
   useEffect(() => {
-    if (formData.operationalRegionId) {
-      const filtered = polres.filter(p => p.poldaId === formData.operationalRegionId)
-      setFilteredPolres(filtered)
+    if (formData.operationalRegionId && formData.operationalRegionId !== "KORLANTAS") {
+      fetchPolresByPolda(formData.operationalRegionId)
     } else {
-      setFilteredPolres([])
+      setPolres([])
     }
-  }, [formData.operationalRegionId, polres])
+    // Reset polresId when operational region changes
+    setFormData(prev => ({ ...prev, polresId: "" }))
+  }, [formData.operationalRegionId])
 
   const fetchPoldas = async () => {
     try {
+      console.log('Fetching poldas...')
+      setIsLoadingPoldas(true)
       const response = await fetch('/api/polda/simple')
       const data = await response.json()
-      if (data.poldas) {
+      console.log('Poldas response:', data)
+      if (Array.isArray(data)) {
+        console.log('Setting poldas:', data)
+        setPoldas(data)
+      } else if (data.poldas) {
+        console.log('Setting poldas from data.poldas:', data.poldas)
         setPoldas(data.poldas)
       }
     } catch (error) {
       console.error('Error fetching poldas:', error)
+    } finally {
+      setIsLoadingPoldas(false)
     }
   }
 
-  const fetchPolres = async () => {
+  const fetchPolresByPolda = async (poldaId: string) => {
     try {
-      const response = await fetch('/api/polres/simple')
+      const response = await fetch(`/api/polres/simple?poldaId=${poldaId}`)
       const data = await response.json()
-      if (data.polres) {
-        setPolres(data.polres)
+      if (Array.isArray(data)) {
+        setPolres(data)
       }
     } catch (error) {
       console.error('Error fetching polres:', error)
@@ -263,44 +272,54 @@ export function AssetForm({ onSubmit, isSubmitting = false, initialData }: Asset
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
-      {/* Section 1: Identitas Aset */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            1. Identitas Aset
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nama Aset *</Label>
+    <div className="max-w-6xl mx-auto px-4 md:px-6">
+      <form onSubmit={handleSubmit} className="space-y-6 md:space-y-8">
+        {/* Header */}
+        <div className="text-center mb-8 md:mb-12">
+          <div className="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl md:rounded-2xl mb-4 md:mb-6 shadow-lg">
+            <FileText className="h-6 w-6 md:h-8 md:w-8 text-white" />
+          </div>
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2 md:mb-3">Tambah Aset Baru</h2>
+          <p className="text-sm md:text-lg text-gray-600 px-4 md:px-0">Isi form di bawah ini untuk menambahkan aset baru ke sistem</p>
+        </div>
+
+        {/* Section 1: Identitas Aset */}
+        <div className="space-y-4 md:space-y-6">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 md:p-4">
+            <h3 className="text-lg md:text-xl font-bold text-blue-900 flex items-center gap-2 md:gap-3">
+              <div className="w-6 h-6 md:w-8 md:h-8 bg-blue-500 rounded-md md:rounded-lg flex items-center justify-center flex-shrink-0">
+                <span className="text-white font-bold text-xs md:text-sm">1</span>
+              </div>
+              <span className="truncate">Identitas Aset</span>
+            </h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            <div className="space-y-3">
+              <Label htmlFor="name" className="text-sm font-medium text-gray-700">Nama Aset *</Label>
               <Input
                 id="name"
                 value={formData.name}
                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                 placeholder="Masukkan nama aset"
+                className="h-12"
                 required
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="inventoryNumber">No. Inventaris *</Label>
+            <div className="space-y-3">
+              <Label htmlFor="inventoryNumber" className="text-sm font-medium text-gray-700">No. Inventaris *</Label>
               <Input
                 id="inventoryNumber"
                 value={formData.inventoryNumber}
                 onChange={(e) => setFormData(prev => ({ ...prev, inventoryNumber: e.target.value }))}
                 placeholder="Masukkan nomor inventaris"
+                className="h-12"
                 required
               />
             </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="kind">Jenis Aset *</Label>
+            <div className="space-y-3">
+              <Label htmlFor="kind" className="text-sm font-medium text-gray-700">Jenis Aset *</Label>
               <Select value={formData.kind} onValueChange={(value) => setFormData(prev => ({ ...prev, kind: value, categoryLevel1: "" }))}>
-                <SelectTrigger>
+                <SelectTrigger className="h-12">
                   <SelectValue placeholder="Pilih jenis aset" />
                 </SelectTrigger>
                 <SelectContent>
@@ -310,10 +329,10 @@ export function AssetForm({ onSubmit, isSubmitting = false, initialData }: Asset
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="categoryLevel1">Kategori Aset *</Label>
+            <div className="space-y-3">
+              <Label htmlFor="categoryLevel1" className="text-sm font-medium text-gray-700">Kategori Aset *</Label>
               <Select value={formData.categoryLevel1} onValueChange={(value) => setFormData(prev => ({ ...prev, categoryLevel1: value }))}>
-                <SelectTrigger>
+                <SelectTrigger className="h-12">
                   <SelectValue placeholder="Pilih kategori aset" />
                 </SelectTrigger>
                 <SelectContent>
@@ -326,65 +345,73 @@ export function AssetForm({ onSubmit, isSubmitting = false, initialData }: Asset
               </Select>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Section 2: Identitas Aset (Wilayah) */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5" />
-            2. Identitas Aset (Wilayah)
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>Pilih wilayah sumber aset yang akan didaftarkan (bisa sama dengan lokasi operasional aset)</Label>
-            <div className="space-y-2">
-              <Label htmlFor="sourceRegion">Wilayah sumber *</Label>
+        {/* Section 2: Identitas Aset (Wilayah) */}
+        <div className="space-y-4 md:space-y-6">
+          <div className="bg-green-50 border border-green-200 rounded-lg p-3 md:p-4">
+            <h3 className="text-lg md:text-xl font-bold text-green-900 flex items-center gap-2 md:gap-3">
+              <div className="w-6 h-6 md:w-8 md:h-8 bg-green-500 rounded-md md:rounded-lg flex items-center justify-center flex-shrink-0">
+                <span className="text-white font-bold text-xs md:text-sm">2</span>
+              </div>
+              <span className="truncate">Identitas Aset (Wilayah)</span>
+            </h3>
+          </div>
+          <div className="space-y-4">
+            <Label className="text-sm text-gray-600">Pilih wilayah sumber aset yang akan didaftarkan (bisa sama dengan lokasi operasional aset)</Label>
+            <div className="space-y-3">
+              <Label htmlFor="sourceRegion" className="text-sm font-medium text-gray-700">Wilayah sumber *</Label>
               <Select value={formData.sourceRegionId} onValueChange={(value) => setFormData(prev => ({ ...prev, sourceRegionId: value }))}>
-                <SelectTrigger>
+                <SelectTrigger className="h-12">
                   <SelectValue placeholder="Dropdown Wilayah Korlantas dan polda" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="KORLANTAS">Korlantas</SelectItem>
-                  {poldas.map((polda) => (
+                  {isLoadingPoldas ? (
+                    <SelectItem value="loading" disabled>Loading poldas...</SelectItem>
+                  ) : poldas.length > 0 ? poldas.map((polda) => (
                     <SelectItem key={polda.id} value={polda.id}>
                       {polda.name}
                     </SelectItem>
-                  ))}
+                  )) : (
+                    <SelectItem value="no-data" disabled>Tidak ada data polda</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label>Pilih wilayah operasional aset yang akan didaftarkan (bisa sama dengan wilayah sumber aset)</Label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="operationalRegion">Wilayah Operasional *</Label>
+          <div className="space-y-4">
+            <Label className="text-sm text-gray-600">Pilih wilayah operasional aset yang akan didaftarkan (bisa sama dengan wilayah sumber aset)</Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+              <div className="space-y-3">
+                <Label htmlFor="operationalRegion" className="text-sm font-medium text-gray-700">Wilayah Operasional *</Label>
                 <Select value={formData.operationalRegionId} onValueChange={(value) => setFormData(prev => ({ ...prev, operationalRegionId: value, polresId: "" }))}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-12">
                     <SelectValue placeholder="Dropdown Wilayah Korlantas dan polda" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="KORLANTAS">Korlantas</SelectItem>
-                    {poldas.map((polda) => (
+                    {isLoadingPoldas ? (
+                      <SelectItem value="loading" disabled>Loading poldas...</SelectItem>
+                    ) : poldas.length > 0 ? poldas.map((polda) => (
                       <SelectItem key={polda.id} value={polda.id}>
                         {polda.name}
                       </SelectItem>
-                    ))}
+                    )) : (
+                      <SelectItem value="no-data" disabled>Tidak ada data polda</SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="polres">Pilih polres *</Label>
+              <div className="space-y-3">
+                <Label htmlFor="polres" className="text-sm font-medium text-gray-700">Pilih polres *</Label>
                 <Select value={formData.polresId} onValueChange={(value) => setFormData(prev => ({ ...prev, polresId: value }))}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-12">
                     <SelectValue placeholder="Dropdown Pilih Polres" />
                   </SelectTrigger>
                   <SelectContent>
-                    {filteredPolres.map((polres) => (
+                    {polres.map((polres) => (
                       <SelectItem key={polres.id} value={polres.id}>
                         {polres.name}
                       </SelectItem>
@@ -392,38 +419,39 @@ export function AssetForm({ onSubmit, isSubmitting = false, initialData }: Asset
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-3">
+                <Label htmlFor="registrationDate" className="text-sm font-medium text-gray-700">Tanggal pendaftaran aset *</Label>
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-gray-500" />
+                  <Input
+                    id="registrationDate"
+                    type="date"
+                    value={formData.registrationDate}
+                    onChange={(e) => setFormData(prev => ({ ...prev, registrationDate: e.target.value }))}
+                    className="h-12"
+                    required
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="registrationDate">Tanggal pendaftaran aset *</Label>
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-gray-500" />
-              <Input
-                id="registrationDate"
-                type="date"
-                value={formData.registrationDate}
-                onChange={(e) => setFormData(prev => ({ ...prev, registrationDate: e.target.value }))}
-                required
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Section 3: Data Sumber dan Status Aset */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building className="h-5 w-5" />
-            3. Data Sumber dan Status Aset
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="source">Sumber Aset *</Label>
+        {/* Section 3: Data Sumber dan Status Aset */}
+        <div className="space-y-4 md:space-y-6">
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 md:p-4">
+            <h3 className="text-lg md:text-xl font-bold text-orange-900 flex items-center gap-2 md:gap-3">
+              <div className="w-6 h-6 md:w-8 md:h-8 bg-orange-500 rounded-md md:rounded-lg flex items-center justify-center flex-shrink-0">
+                <span className="text-white font-bold text-xs md:text-sm">3</span>
+              </div>
+              <span className="truncate">Data Sumber dan Status Aset</span>
+            </h3>
+          </div>
+          <div className="space-y-3">
+            <Label htmlFor="source" className="text-sm font-medium text-gray-700">Sumber Aset *</Label>
             <Select value={formData.source} onValueChange={(value) => setFormData(prev => ({ ...prev, source: value }))}>
-              <SelectTrigger>
+              <SelectTrigger className="h-12">
                 <SelectValue placeholder="Pilih sumber aset" />
               </SelectTrigger>
               <SelectContent>
@@ -440,115 +468,122 @@ export function AssetForm({ onSubmit, isSubmitting = false, initialData }: Asset
           {formData.source && formData.source !== "PINJAM_PAKAI" && (
             <>
               <div className="space-y-2">
-                <Label htmlFor="sourceDetail">Asal {formData.source === "PENGADAAN" ? "Pengadaan" : formData.source === "HIBAH" ? "Hibah" : formData.source === "POC" ? "POC" : "Lainnya"} *</Label>
+                <Label htmlFor="sourceDetail" className="text-sm font-medium text-gray-700">Asal {formData.source === "PENGADAAN" ? "Pengadaan" : formData.source === "HIBAH" ? "Hibah" : formData.source === "POC" ? "POC" : "Lainnya"} *</Label>
                 <Input
                   id="sourceDetail"
                   value={formData.sourceDetail}
                   onChange={(e) => setFormData(prev => ({ ...prev, sourceDetail: e.target.value }))}
                   placeholder="Masukkan asal sumber"
+                  className="h-10"
                   required
                 />
               </div>
 
-              <Separator />
-              <div className="space-y-4">
-                <h4 className="font-medium">Penanggung jawab {formData.source === "PENGADAAN" ? "Pengadaan" : formData.source === "HIBAH" ? "Hibah" : formData.source === "POC" ? "POC" : "Lainnya"}</h4>
+              <div className="border-t border-gray-200 pt-4">
+                <h4 className="text-base font-medium text-gray-900 mb-4">Penanggung jawab {formData.source === "PENGADAAN" ? "Pengadaan" : formData.source === "HIBAH" ? "Hibah" : formData.source === "POC" ? "POC" : "Lainnya"}</h4>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="sourceCompanyName">Nama Perusahaan *</Label>
+                  <Label htmlFor="sourceCompanyName" className="text-sm font-medium text-gray-700">Nama Perusahaan *</Label>
                   <Input
                     id="sourceCompanyName"
                     value={formData.sourceCompanyName}
                     onChange={(e) => setFormData(prev => ({ ...prev, sourceCompanyName: e.target.value }))}
                     placeholder="Masukkan nama perusahaan"
+                    className="h-10"
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="sourceCompanyAddress">Alamat perusahaan</Label>
+                  <Label htmlFor="sourceCompanyAddress" className="text-sm font-medium text-gray-700">Alamat perusahaan</Label>
                   <Input
                     id="sourceCompanyAddress"
                     value={formData.sourceCompanyAddress}
                     onChange={(e) => setFormData(prev => ({ ...prev, sourceCompanyAddress: e.target.value }))}
                     placeholder="Alamat singkat"
+                    className="h-10"
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                   <div className="space-y-2">
-                    <Label htmlFor="sourceCompanyProvince">Propinsi</Label>
+                    <Label htmlFor="sourceCompanyProvince" className="text-sm font-medium text-gray-700">Propinsi</Label>
                     <Input
                       id="sourceCompanyProvince"
                       value={formData.sourceCompanyProvince}
                       onChange={(e) => setFormData(prev => ({ ...prev, sourceCompanyProvince: e.target.value }))}
                       placeholder="Propinsi"
+                      className="h-10"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="sourceCompanyRegency">Kabupaten</Label>
+                    <Label htmlFor="sourceCompanyRegency" className="text-sm font-medium text-gray-700">Kabupaten</Label>
                     <Input
                       id="sourceCompanyRegency"
                       value={formData.sourceCompanyRegency}
                       onChange={(e) => setFormData(prev => ({ ...prev, sourceCompanyRegency: e.target.value }))}
                       placeholder="Kabupaten"
+                      className="h-10"
                     />
                   </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="sourceCompanyDistrict">Kecamatan</Label>
+                    <Label htmlFor="sourceCompanyDistrict" className="text-sm font-medium text-gray-700">Kecamatan</Label>
                     <Input
                       id="sourceCompanyDistrict"
                       value={formData.sourceCompanyDistrict}
                       onChange={(e) => setFormData(prev => ({ ...prev, sourceCompanyDistrict: e.target.value }))}
                       placeholder="Kecamatan"
+                      className="h-10"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="sourceCompanyVillage">Kelurahan/desa</Label>
+                    <Label htmlFor="sourceCompanyVillage" className="text-sm font-medium text-gray-700">Kelurahan/desa</Label>
                     <Input
                       id="sourceCompanyVillage"
                       value={formData.sourceCompanyVillage}
                       onChange={(e) => setFormData(prev => ({ ...prev, sourceCompanyVillage: e.target.value }))}
                       placeholder="Kelurahan/desa"
+                      className="h-10"
                     />
                   </div>
                 </div>
 
-                <Separator />
-                <h4 className="font-medium">Perwakilan perusahaan</h4>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="sourceCompanyRepName">Nama *</Label>
-                    <Input
-                      id="sourceCompanyRepName"
-                      value={formData.sourceCompanyRepName}
-                      onChange={(e) => setFormData(prev => ({ ...prev, sourceCompanyRepName: e.target.value }))}
-                      placeholder="Nama perwakilan"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="sourceCompanyRepEmail">Email</Label>
-                    <Input
-                      id="sourceCompanyRepEmail"
-                      type="email"
-                      value={formData.sourceCompanyRepEmail}
-                      onChange={(e) => setFormData(prev => ({ ...prev, sourceCompanyRepEmail: e.target.value }))}
-                      placeholder="Email perwakilan"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="sourceCompanyRepPhone">No. telp.</Label>
-                    <Input
-                      id="sourceCompanyRepPhone"
-                      value={formData.sourceCompanyRepPhone}
-                      onChange={(e) => setFormData(prev => ({ ...prev, sourceCompanyRepPhone: e.target.value }))}
-                      placeholder="No. telp perwakilan"
-                    />
+                <div className="border-t border-gray-200 pt-4">
+                  <h4 className="text-base font-medium text-gray-900 mb-4">Perwakilan perusahaan</h4>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="sourceCompanyRepName" className="text-sm font-medium text-gray-700">Nama *</Label>
+                      <Input
+                        id="sourceCompanyRepName"
+                        value={formData.sourceCompanyRepName}
+                        onChange={(e) => setFormData(prev => ({ ...prev, sourceCompanyRepName: e.target.value }))}
+                        placeholder="Nama perwakilan"
+                        className="h-10"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="sourceCompanyRepEmail" className="text-sm font-medium text-gray-700">Email</Label>
+                      <Input
+                        id="sourceCompanyRepEmail"
+                        type="email"
+                        value={formData.sourceCompanyRepEmail}
+                        onChange={(e) => setFormData(prev => ({ ...prev, sourceCompanyRepEmail: e.target.value }))}
+                        placeholder="Email perwakilan"
+                        className="h-10"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="sourceCompanyRepPhone" className="text-sm font-medium text-gray-700">No. telp.</Label>
+                      <Input
+                        id="sourceCompanyRepPhone"
+                        value={formData.sourceCompanyRepPhone}
+                        onChange={(e) => setFormData(prev => ({ ...prev, sourceCompanyRepPhone: e.target.value }))}
+                        placeholder="No. telp perwakilan"
+                        className="h-10"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -561,7 +596,7 @@ export function AssetForm({ onSubmit, isSubmitting = false, initialData }: Asset
               <div className="space-y-4">
                 <h4 className="font-medium">Asal wilayah pinjam pakai</h4>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="loanRegion">Pilih wilayah Pinjam *</Label>
                     <Select value={formData.loanRegionId} onValueChange={(value) => setFormData(prev => ({ ...prev, loanRegionId: value }))}>
@@ -598,7 +633,7 @@ export function AssetForm({ onSubmit, isSubmitting = false, initialData }: Asset
                 <Separator />
                 <h4 className="font-medium">Penanggung jawab Pinjam Pakai</h4>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="loanRepName">Nama *</Label>
                     <Input
@@ -642,22 +677,22 @@ export function AssetForm({ onSubmit, isSubmitting = false, initialData }: Asset
               </div>
             </>
           )}
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Section 4: Status Pemeliharaan dan Perawatan */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            4. Status Pemeliharaan dan Perawatan
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>Status Pemeliharaan dan Perawatan *</Label>
-            <div className="flex gap-4">
-              <label className="flex items-center space-x-2">
+        {/* Section 4: Status Pemeliharaan dan Perawatan */}
+        <div className="space-y-4 md:space-y-6">
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 md:p-4">
+            <h3 className="text-lg md:text-xl font-bold text-purple-900 flex items-center gap-2 md:gap-3">
+              <div className="w-6 h-6 md:w-8 md:h-8 bg-purple-500 rounded-md md:rounded-lg flex items-center justify-center flex-shrink-0">
+                <span className="text-white font-bold text-xs md:text-sm">4</span>
+              </div>
+              <span className="truncate">Status Pemeliharaan dan Perawatan</span>
+            </h3>
+          </div>
+          <div className="space-y-4">
+            <Label className="text-sm font-medium text-gray-700">Status Pemeliharaan dan Perawatan *</Label>
+            <div className="flex flex-col sm:flex-row gap-4 sm:gap-8">
+              <label className="flex items-center space-x-3">
                 <input
                   type="radio"
                   name="maintenanceStatus"
@@ -666,9 +701,9 @@ export function AssetForm({ onSubmit, isSubmitting = false, initialData }: Asset
                   onChange={(e) => setFormData(prev => ({ ...prev, maintenanceStatus: e.target.value }))}
                   className="rounded"
                 />
-                <span>Aktif</span>
+                <span className="text-sm">Aktif</span>
               </label>
-              <label className="flex items-center space-x-2">
+              <label className="flex items-center space-x-3">
                 <input
                   type="radio"
                   name="maintenanceStatus"
@@ -677,7 +712,7 @@ export function AssetForm({ onSubmit, isSubmitting = false, initialData }: Asset
                   onChange={(e) => setFormData(prev => ({ ...prev, maintenanceStatus: e.target.value }))}
                   className="rounded"
                 />
-                <span>Non Aktif</span>
+                <span className="text-sm">Non Aktif</span>
               </label>
             </div>
           </div>
@@ -703,114 +738,121 @@ export function AssetForm({ onSubmit, isSubmitting = false, initialData }: Asset
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="maintenanceCompanyName">Nama Perusahaan Pemegang Harwat *</Label>
+                <Label htmlFor="maintenanceCompanyName" className="text-sm font-medium text-gray-700">Nama Perusahaan Pemegang Harwat *</Label>
                 <Input
                   id="maintenanceCompanyName"
                   value={formData.maintenanceCompanyName}
                   onChange={(e) => setFormData(prev => ({ ...prev, maintenanceCompanyName: e.target.value }))}
                   placeholder="Masukkan nama perusahaan"
+                  className="h-10"
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="maintenanceCompanyAddress">Alamat perusahaan</Label>
+                <Label htmlFor="maintenanceCompanyAddress" className="text-sm font-medium text-gray-700">Alamat perusahaan</Label>
                 <Input
                   id="maintenanceCompanyAddress"
                   value={formData.maintenanceCompanyAddress}
                   onChange={(e) => setFormData(prev => ({ ...prev, maintenanceCompanyAddress: e.target.value }))}
                   placeholder="Alamat singkat"
+                  className="h-10"
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="maintenanceCompanyProvince">Propinsi</Label>
+                  <Label htmlFor="maintenanceCompanyProvince" className="text-sm font-medium text-gray-700">Propinsi</Label>
                   <Input
                     id="maintenanceCompanyProvince"
                     value={formData.maintenanceCompanyProvince}
                     onChange={(e) => setFormData(prev => ({ ...prev, maintenanceCompanyProvince: e.target.value }))}
                     placeholder="Propinsi"
+                    className="h-10"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="maintenanceCompanyRegency">Kabupaten</Label>
+                  <Label htmlFor="maintenanceCompanyRegency" className="text-sm font-medium text-gray-700">Kabupaten</Label>
                   <Input
                     id="maintenanceCompanyRegency"
                     value={formData.maintenanceCompanyRegency}
                     onChange={(e) => setFormData(prev => ({ ...prev, maintenanceCompanyRegency: e.target.value }))}
                     placeholder="Kabupaten"
+                    className="h-10"
                   />
                 </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="maintenanceCompanyDistrict">Kecamatan</Label>
+                  <Label htmlFor="maintenanceCompanyDistrict" className="text-sm font-medium text-gray-700">Kecamatan</Label>
                   <Input
                     id="maintenanceCompanyDistrict"
                     value={formData.maintenanceCompanyDistrict}
                     onChange={(e) => setFormData(prev => ({ ...prev, maintenanceCompanyDistrict: e.target.value }))}
                     placeholder="Kecamatan"
+                    className="h-10"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="maintenanceCompanyVillage">Kelurahan/desa</Label>
+                  <Label htmlFor="maintenanceCompanyVillage" className="text-sm font-medium text-gray-700">Kelurahan/desa</Label>
                   <Input
                     id="maintenanceCompanyVillage"
                     value={formData.maintenanceCompanyVillage}
                     onChange={(e) => setFormData(prev => ({ ...prev, maintenanceCompanyVillage: e.target.value }))}
                     placeholder="Kelurahan/desa"
+                    className="h-10"
                   />
                 </div>
               </div>
 
-              <Separator />
-              <h4 className="font-medium">Perwakilan perusahaan</h4>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="maintenanceRepName">Nama *</Label>
-                  <Input
-                    id="maintenanceRepName"
-                    value={formData.maintenanceRepName}
-                    onChange={(e) => setFormData(prev => ({ ...prev, maintenanceRepName: e.target.value }))}
-                    placeholder="Nama perwakilan"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="maintenanceRepEmail">Email</Label>
-                  <Input
-                    id="maintenanceRepEmail"
-                    type="email"
-                    value={formData.maintenanceRepEmail}
-                    onChange={(e) => setFormData(prev => ({ ...prev, maintenanceRepEmail: e.target.value }))}
-                    placeholder="Email perwakilan"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="maintenanceRepPhone">No.telp.</Label>
-                  <Input
-                    id="maintenanceRepPhone"
-                    value={formData.maintenanceRepPhone}
-                    onChange={(e) => setFormData(prev => ({ ...prev, maintenanceRepPhone: e.target.value }))}
-                    placeholder="No. telp perwakilan"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="maintenanceValidityDate">Tanggal masa berlaku harwat *</Label>
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-gray-500" />
-                  <Input
-                    id="maintenanceValidityDate"
-                    type="date"
-                    value={formData.maintenanceValidityDate}
-                    onChange={(e) => setFormData(prev => ({ ...prev, maintenanceValidityDate: e.target.value }))}
-                    required
-                  />
+              <div className="border-t border-gray-200 pt-4">
+                <h4 className="text-base font-medium text-gray-900 mb-4">Perwakilan perusahaan</h4>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="maintenanceRepName" className="text-sm font-medium text-gray-700">Nama *</Label>
+                    <Input
+                      id="maintenanceRepName"
+                      value={formData.maintenanceRepName}
+                      onChange={(e) => setFormData(prev => ({ ...prev, maintenanceRepName: e.target.value }))}
+                      placeholder="Nama perwakilan"
+                      className="h-10"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="maintenanceRepEmail" className="text-sm font-medium text-gray-700">Email</Label>
+                    <Input
+                      id="maintenanceRepEmail"
+                      type="email"
+                      value={formData.maintenanceRepEmail}
+                      onChange={(e) => setFormData(prev => ({ ...prev, maintenanceRepEmail: e.target.value }))}
+                      placeholder="Email perwakilan"
+                      className="h-10"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="maintenanceRepPhone" className="text-sm font-medium text-gray-700">No.telp.</Label>
+                    <Input
+                      id="maintenanceRepPhone"
+                      value={formData.maintenanceRepPhone}
+                      onChange={(e) => setFormData(prev => ({ ...prev, maintenanceRepPhone: e.target.value }))}
+                      placeholder="No. telp perwakilan"
+                      className="h-10"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="maintenanceValidityDate" className="text-sm font-medium text-gray-700">Tanggal masa berlaku harwat *</Label>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-gray-500" />
+                      <Input
+                        id="maintenanceValidityDate"
+                        type="date"
+                        value={formData.maintenanceValidityDate}
+                        onChange={(e) => setFormData(prev => ({ ...prev, maintenanceValidityDate: e.target.value }))}
+                        className="h-10"
+                        required
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -858,22 +900,22 @@ export function AssetForm({ onSubmit, isSubmitting = false, initialData }: Asset
               </div>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Submit Button */}
-      <div className="flex justify-end">
-        <Button type="submit" disabled={isSubmitting} className="min-w-[120px]">
-          {isSubmitting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Menyimpan...
-            </>
-          ) : (
-            'SUBMIT'
-          )}
-        </Button>
-      </div>
-    </form>
+        {/* Submit Button */}
+        <div className="pt-6 md:pt-8">
+          <Button type="submit" disabled={isSubmitting} className="w-full h-12 md:h-14 text-base md:text-lg">
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 md:h-5 md:w-5 animate-spin" />
+                Menyimpan...
+              </>
+            ) : (
+              'Simpan Aset'
+            )}
+          </Button>
+        </div>
+      </form>
+    </div>
   )
 }
