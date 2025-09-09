@@ -63,17 +63,15 @@ export async function POST(request: NextRequest) {
         password: hashedPassword,
         role: role as any,
         status: "PENDING",
-        accountType: accountType as any,
         poldaId: poldaId || null,
         polresId: polresId || null,
-        // Fields khusus pihak ketiga
+        // Fields yang ada di schema
         companyName: companyName || null,
         phone: phone || null,
         assetTypes: assetTypes ? JSON.stringify(assetTypes) : null,
         otherAssetType: otherAssetType || null,
         region: region || null,
         satwil: satwil || null,
-        // Fields khusus anggota
         pangkat: pangkat || null,
         jabatan: jabatan || null,
         isEtleOperator: isEtleOperator || false,
