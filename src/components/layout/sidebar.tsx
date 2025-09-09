@@ -83,38 +83,41 @@ interface SidebarProps {
 
 export const Sidebar = memo(function Sidebar({ onClose, collapsed = false }: SidebarProps) {
   const pathname = usePathname()
-  const { pendingCount } = usePendingUsers()
+  const { pendingCount, loading: pendingLoading } = usePendingUsers()
   const { hasPermission } = useAuth()
 
-  // Memoize menu items to prevent unnecessary re-renders
+  // Memoize filtered menu items separately from badge logic
+  const filteredMenuItems = useMemo(() => {
+    return menuItems.filter(item => {
+      // Filter menu items based on user role
+      switch (item.href) {
+        case "/dashboard/users":
+          return hasPermission(["ADMIN", "KORLANTAS", "POLDA"])
+        case "/dashboard/polda":
+          return hasPermission(["ADMIN", "KORLANTAS"])
+        case "/dashboard/polres":
+          return hasPermission(["ADMIN", "KORLANTAS", "POLDA"])
+        case "/dashboard/assets":
+          return hasPermission(["ADMIN", "KORLANTAS", "POLDA", "POLRES", "USER"])
+        case "/dashboard/reports":
+          return hasPermission(["ADMIN", "KORLANTAS", "POLDA", "POLRES", "USER"])
+        case "/dashboard/harwat":
+          return hasPermission(["ADMIN", "KORLANTAS", "POLDA", "POLRES", "USER"])
+        case "/dashboard/monitoring-asset":
+          return hasPermission(["ADMIN", "KORLANTAS", "POLDA", "POLRES", "USER"])
+        default:
+          return true
+      }
+    })
+  }, [hasPermission])
+
+  // Memoize menu items with badge separately to avoid re-filtering
   const menuItemsWithBadge = useMemo(() => {
-    return menuItems
-      .filter(item => {
-        // Filter menu items based on user role
-        switch (item.href) {
-          case "/dashboard/users":
-            return hasPermission(["ADMIN", "KORLANTAS", "POLDA"])
-          case "/dashboard/polda":
-            return hasPermission(["ADMIN", "KORLANTAS"])
-          case "/dashboard/polres":
-            return hasPermission(["ADMIN", "KORLANTAS", "POLDA"])
-          case "/dashboard/assets":
-            return hasPermission(["ADMIN", "KORLANTAS", "POLDA", "POLRES", "USER"])
-          case "/dashboard/reports":
-            return hasPermission(["ADMIN", "KORLANTAS", "POLDA", "POLRES", "USER"])
-          case "/dashboard/harwat":
-            return hasPermission(["ADMIN", "KORLANTAS", "POLDA", "POLRES", "USER"])
-          case "/dashboard/monitoring-asset":
-            return hasPermission(["ADMIN", "KORLANTAS", "POLDA", "POLRES", "USER"])
-          default:
-            return true
-        }
-      })
-      .map(item => ({
-        ...item,
-        showBadge: item.showBadge && pendingCount > 0
-      }))
-  }, [pendingCount, hasPermission])
+    return filteredMenuItems.map(item => ({
+      ...item,
+      showBadge: item.showBadge && pendingCount > 0 && !pendingLoading
+    }))
+  }, [filteredMenuItems, pendingCount, pendingLoading])
 
   const handleItemClick = () => {
     // Close sidebar on mobile when item is clicked
@@ -158,52 +161,72 @@ export const Sidebar = memo(function Sidebar({ onClose, collapsed = false }: Sid
 
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-          {menuItemsWithBadge.map((item) => {
-            const isActive = pathname === item.href
-
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={handleItemClick}
+          {pendingLoading && filteredMenuItems.length === 0 ? (
+            // Loading skeleton
+            Array.from({ length: 6 }).map((_, index) => (
+              <div
+                key={index}
                 className={cn(
-                  "flex items-center rounded-lg transition-all duration-200 group relative",
-                  collapsed ? "justify-center px-2 py-2" : "space-x-3 px-2 py-2",
-                  isActive
-                    ? "bg-blue-600 text-white border border-blue-200"
-                    : "text-gray-700 hover:bg-blue-50/80 hover:text-blue-700"
+                  "flex items-center rounded-lg transition-all duration-200",
+                  collapsed ? "justify-center px-2 py-2" : "space-x-3 px-2 py-2"
                 )}
               >
-                <div className={cn(
-                  "w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 flex-shrink-0 ",
-                  isActive
-                    ? "bg-white/20 text-white border-white/30"
-                    : "text-gray-500 group-hover:text-blue-600 group-hover:bg-blue-50 border-gray-200 group-hover:border-blue-200",
-                  collapsed && !isActive && "bg-gray-50"
-                )}>
-                  <item.icon className={cn(
-                    "w-5 h-5 transition-all duration-200",
-                    isActive ? "text-white" : "text-gray-500 group-hover:text-blue-600"
-                  )} />
-                </div>
+                <div className="w-8 h-8 bg-gray-200 rounded-lg animate-pulse flex-shrink-0" />
                 {!collapsed && (
-                  <div className="flex items-center justify-between flex-1 min-w-0">
-                    <span className="font-medium truncate">{item.title}</span>
-                    {item.showBadge && (
-                      <Badge
-                        className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0"
-                      >
-                        {pendingCount > 99 ? '99+' : pendingCount}
-                      </Badge>
-                    )}
+                  <div className="flex-1">
+                    <div className="h-4 bg-gray-200 rounded animate-pulse" />
                   </div>
                 )}
-                {collapsed && item.showBadge && (
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></div>
-                )}
-              </Link>
-            )
-          })}
+              </div>
+            ))
+          ) : (
+            menuItemsWithBadge.map((item) => {
+              const isActive = pathname === item.href
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={handleItemClick}
+                  className={cn(
+                    "flex items-center rounded-lg transition-all duration-200 group relative",
+                    collapsed ? "justify-center px-2 py-2" : "space-x-3 px-2 py-2",
+                    isActive
+                      ? "bg-blue-600 text-white border border-blue-200"
+                      : "text-gray-700 hover:bg-blue-50/80 hover:text-blue-700"
+                  )}
+                >
+                  <div className={cn(
+                    "w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 flex-shrink-0 ",
+                    isActive
+                      ? "bg-white/20 text-white border-white/30"
+                      : "text-gray-500 group-hover:text-blue-600 group-hover:bg-blue-50 border-gray-200 group-hover:border-blue-200",
+                    collapsed && !isActive && "bg-gray-50"
+                  )}>
+                    <item.icon className={cn(
+                      "w-5 h-5 transition-all duration-200",
+                      isActive ? "text-white" : "text-gray-500 group-hover:text-blue-600"
+                    )} />
+                  </div>
+                  {!collapsed && (
+                    <div className="flex items-center justify-between flex-1 min-w-0">
+                      <span className="font-medium truncate">{item.title}</span>
+                      {item.showBadge && (
+                        <Badge
+                          className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0"
+                        >
+                          {pendingCount > 99 ? '99+' : pendingCount}
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+                  {collapsed && item.showBadge && (
+                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></div>
+                  )}
+                </Link>
+              )
+            })
+          )}
         </nav>
 
         {/* Footer */}

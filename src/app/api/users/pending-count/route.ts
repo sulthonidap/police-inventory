@@ -13,18 +13,24 @@ export const maxDuration = 30
 
 export async function GET(request: NextRequest) {
   try {
-    const count = await prisma.user.count({
+    // Add timeout to prevent hanging requests
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Request timeout')), 3000)
+    })
+
+    const countPromise = prisma.user.count({
       where: {
         status: 'PENDING'
       }
     })
 
+    const count = await Promise.race([countPromise, timeoutPromise]) as number
+
     return NextResponse.json({ count })
   } catch (error) {
     console.error('Error counting pending users:', error)
-    return NextResponse.json(
-      { error: 'Failed to count pending users' },
-      { status: 500 }
-    )
+    
+    // Return 0 as fallback instead of error to prevent sidebar blocking
+    return NextResponse.json({ count: 0 })
   }
 }
