@@ -122,13 +122,19 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ Admin user created successfully:', adminUser.id)
 
-    // Hapus password dari response
-    const { password: _, ...userWithoutPassword } = adminUser
-
     return NextResponse.json({
       success: true,
       message: 'Admin user berhasil dibuat dan langsung di-approve',
-      user: userWithoutPassword
+      user: {
+        id: adminUser.id,
+        name: adminUser.name,
+        email: adminUser.email,
+        nrp: adminUser.nrp,
+        role: adminUser.role,
+        status: adminUser.status,
+        createdAt: adminUser.createdAt,
+        updatedAt: adminUser.updatedAt
+      }
     }, { status: 201 })
 
   } catch (error: any) {
