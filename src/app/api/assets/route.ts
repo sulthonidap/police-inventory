@@ -360,12 +360,12 @@ export async function POST(request: NextRequest) {
         status: "ACTIVE",
         
         // Basic fields only (matching current database schema)
-        kind: (kind as any) || undefined,
+        kind: kind === "DIGITAL_IT" ? "DIGITAL" : (kind as any) || undefined,
         categoryLevel1: categoryLevel1 || undefined,
         categoryLevel2: categoryLevel2 || undefined,
         categoryLevel3: categoryLevel3 || undefined,
         inventoryNumber: inventoryNumber || undefined,
-        source: (source as any) || undefined,
+        source: source === "PENGADAAN" ? "APBN" : (source as any) || undefined,
         year: year ? parseInt(year) : undefined,
         poldaId: poldaId || undefined,
         qrData: qrData || undefined
