@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     let { nrp, name, email, password, role, polresId, poldaId } = body as {
-      nrp: string; name: string; email: string; password: string; role: "ADMIN" | "KORLANTAS" | "POLDA" | "POLRES" | "USER"; polresId?: string | null; poldaId?: string | null
+      nrp: string; name: string; email: string; password: string; role: "ADMIN" | "KORLANTAS" | "POLDA" | "POLRES" | "USER" | "TEKNISI"; polresId?: string | null; poldaId?: string | null
     }
 
     // Validate required fields
@@ -169,9 +169,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Role-based validation and derivation
-    if (role === 'USER') {
+    if (role === 'USER' || role === 'TEKNISI') {
       if (!polres || !polda) {
-        return NextResponse.json({ error: 'Untuk role USER, pilih Polda dan Polres' }, { status: 400 })
+        return NextResponse.json({ error: `Untuk role ${role}, pilih Polda dan Polres` }, { status: 400 })
       }
       if (polres.poldaId !== polda.id) {
         return NextResponse.json({ error: 'Polres yang dipilih tidak termasuk dalam Polda tersebut' }, { status: 400 })

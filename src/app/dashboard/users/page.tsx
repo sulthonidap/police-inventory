@@ -66,6 +66,23 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  
+  // Search states for dropdowns
+  const [poldaSearch, setPoldaSearch] = useState("")
+  const [polresSearch, setPolresSearch] = useState("")
+  const [polresForFormSearch, setPolresForFormSearch] = useState("")
+  
+  // Filtered data based on search
+  const filteredPoldas = poldas.filter(polda => 
+    polda.name.toLowerCase().includes(poldaSearch.toLowerCase())
+  )
+  const filteredPolres = polres.filter(polres => 
+    polres.name.toLowerCase().includes(polresSearch.toLowerCase())
+  )
+  const filteredPolresForForm = polresForForm.filter(polres => 
+    polres.name.toLowerCase().includes(polresForFormSearch.toLowerCase())
+  )
+  
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean
     type: 'approve' | 'reject' | 'delete' | 'reset' | null
@@ -117,9 +134,12 @@ export default function UsersPage() {
 
   useEffect(() => {
     fetchUsers()
+  }, [pagination.page, pageSize, searchTerm, statusFilter, roleFilter, poldaFilter, polresFilter])
+
+  useEffect(() => {
     fetchPoldas()
     fetchPolres()
-  }, [pagination.page, pageSize, searchTerm, statusFilter, roleFilter, poldaFilter, polresFilter])
+  }, [])
 
   const fetchUsers = async () => {
     try {
@@ -221,19 +241,31 @@ export default function UsersPage() {
 
   // When form role or poldaId changes, load Polres for form
   useEffect(() => {
+    console.log('useEffect triggered - role:', formData.role, 'poldaId:', formData.poldaId)
     const loadPolresForForm = async () => {
-      if (formData.role === 'USER') {
+      if (formData.role === 'USER' || formData.role === 'TEKNISI' || formData.role === 'POLRES') {
         if (!formData.poldaId) {
           setPolresForForm([])
           setFormData(prev => ({ ...prev, polresId: "" }))
           return
         }
+        console.log('Loading polres for poldaId:', formData.poldaId)
+        try {
         const res = await fetch(`/api/polres/simple?poldaId=${formData.poldaId}`)
+          if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`)
+          }
         const data = await res.json()
+          console.log('Polres loaded:', data.length, 'items')
+          console.log('Polres data:', data)
         setPolresForForm(data)
         // reset selected polres if not in list
         if (!data.find((p: Polres) => p.id === formData.polresId)) {
           setFormData(prev => ({ ...prev, polresId: "" }))
+          }
+        } catch (error) {
+          console.error('Error loading polres:', error)
+          setPolresForForm([])
         }
       } else {
         setPolresForForm([])
@@ -456,7 +488,15 @@ export default function UsersPage() {
           <p className="text-muted-foreground">Kelola data pengguna sistem</p>
         </div>
 
-        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <Dialog open={isModalOpen} onOpenChange={(open) => {
+          setIsModalOpen(open)
+          if (open) {
+            // Reset search states when opening modal
+            setPoldaSearch("")
+            setPolresSearch("")
+            setPolresForFormSearch("")
+          }
+        }}>
           <DialogTrigger asChild>
             <Button className="w-full sm:w-auto">
               <UserPlus className="mr-2 h-4 w-4" />
@@ -489,18 +529,18 @@ export default function UsersPage() {
                 <Input id="password" type="password" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} placeholder="Masukkan password" required />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="role">Role</Label>
-                  <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value, // reset dependent fields
-                    poldaId: value === 'POLDA' || value === 'USER' ? formData.poldaId : '',
-                    polresId: value === 'POLRES' || value === 'USER' ? formData.polresId : ''
+                <Select value={formData.role}                 onValueChange={(value) => setFormData({ ...formData, role: value, // reset dependent fields
+                  poldaId: (value === 'POLDA' || value === 'USER' || value === 'TEKNISI') ? formData.poldaId : '',
+                  polresId: (value === 'POLRES' || value === 'USER' || value === 'TEKNISI') ? formData.polresId : ''
                   })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Pilih role" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="USER">User</SelectItem>
+                    <SelectItem value="TEKNISI">Teknisi</SelectItem>
                       <SelectItem value="POLRES">Polres</SelectItem>
                       <SelectItem value="POLDA">Polda</SelectItem>
                       <SelectItem value="KORLANTAS">Korlantas</SelectItem>
@@ -518,14 +558,25 @@ export default function UsersPage() {
                         <SelectValue placeholder="Pilih Polda" />
                       </SelectTrigger>
                       <SelectContent>
-                        {poldas.map((p) => (
+                      <div className="p-2">
+                        <Input
+                          placeholder="Cari Polda..."
+                          value={poldaSearch}
+                          onChange={(e) => setPoldaSearch(e.target.value)}
+                          className="mb-2"
+                        />
+                      </div>
+                      {filteredPoldas.length > 0 ? filteredPoldas.map((p) => (
                           <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                        ))}
+                      )) : (
+                        <SelectItem value="loading" disabled>
+                          {poldaSearch ? "Tidak ditemukan" : "Loading..."}
+                        </SelectItem>
+                      )}
                       </SelectContent>
                     </Select>
                   </div>
                 )}
-              </div>
 
               {/* Role USER: pilih Polda -> Polres terafiliasi */}
               {formData.role === 'USER' && (
@@ -537,9 +588,21 @@ export default function UsersPage() {
                         <SelectValue placeholder="Pilih Polda" />
                       </SelectTrigger>
                       <SelectContent>
-                        {poldas.map((p) => (
+                        <div className="p-2">
+                          <Input
+                            placeholder="Cari Polda..."
+                            value={poldaSearch}
+                            onChange={(e) => setPoldaSearch(e.target.value)}
+                            className="mb-2"
+                          />
+                        </div>
+                        {filteredPoldas.length > 0 ? filteredPoldas.map((p) => (
                           <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                        ))}
+                        )) : (
+                          <SelectItem value="loading" disabled>
+                            {poldaSearch ? "Tidak ditemukan" : "Loading..."}
+                          </SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -550,31 +613,143 @@ export default function UsersPage() {
                         <SelectValue placeholder={formData.poldaId ? "Pilih Polres" : "Pilih Polda dulu"} />
                       </SelectTrigger>
                       <SelectContent>
-                        {polresForForm.map((pr) => (
+                        <div className="p-2">
+                          <Input
+                            placeholder="Cari Polres..."
+                            value={polresForFormSearch}
+                            onChange={(e) => setPolresForFormSearch(e.target.value)}
+                            className="mb-2"
+                          />
+                        </div>
+                        {(() => {
+                          console.log('Rendering USER polres dropdown, polresForForm length:', polresForForm.length)
+                          console.log('polresForForm data:', polresForForm)
+                          return filteredPolresForForm.length > 0 ? filteredPolresForForm.map((pr) => (
                           <SelectItem key={pr.id} value={pr.id}>{pr.name}</SelectItem>
-                        ))}
+                          )) : (
+                            <SelectItem value="loading" disabled>
+                              {formData.poldaId ? (polresForFormSearch ? "Tidak ditemukan" : "Loading...") : "Pilih Polda dulu"}
+                            </SelectItem>
+                          )
+                        })()}
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
               )}
 
-              {/* Role POLRES: pilih Polres */}
-              {formData.role === 'POLRES' && (
-                <div className="space-y-2">
-                  <Label htmlFor="polres">Polres</Label>
-                  <Select value={formData.polresId} onValueChange={(value) => setFormData({ ...formData, polresId: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih Polres" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {polres.map((pr) => (
-                        <SelectItem key={pr.id} value={pr.id}>{pr.name} - {pr.polda.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              {/* Role TEKNISI: pilih Polda -> Polres terafiliasi */}
+              {formData.role === 'TEKNISI' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="polda">Polda</Label>
+                    <Select value={formData.poldaId} onValueChange={(value) => setFormData({ ...formData, poldaId: value })}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih Polda" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <div className="p-2">
+                          <Input
+                            placeholder="Cari Polda..."
+                            value={poldaSearch}
+                            onChange={(e) => setPoldaSearch(e.target.value)}
+                            className="mb-2"
+                          />
+                        </div>
+                        {filteredPoldas.length > 0 ? filteredPoldas.map((p) => (
+                          <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                        )) : (
+                          <SelectItem value="loading" disabled>
+                            {poldaSearch ? "Tidak ditemukan" : "Loading..."}
+                          </SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="polres">Polres</Label>
+                    <Select value={formData.polresId} onValueChange={(value) => setFormData({ ...formData, polresId: value })} disabled={!formData.poldaId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={formData.poldaId ? "Pilih Polres" : "Pilih Polda dulu"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <div className="p-2">
+                          <Input
+                            placeholder="Cari Polres..."
+                            value={polresForFormSearch}
+                            onChange={(e) => setPolresForFormSearch(e.target.value)}
+                            className="mb-2"
+                          />
+                        </div>
+                        {filteredPolresForForm.length > 0 ? filteredPolresForForm.map((pr) => (
+                          <SelectItem key={pr.id} value={pr.id}>{pr.name}</SelectItem>
+                        )) : (
+                          <SelectItem value="loading" disabled>
+                            {formData.poldaId ? (polresForFormSearch ? "Tidak ditemukan" : "Loading...") : "Pilih Polda dulu"}
+                          </SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               )}
+
+              {/* Role POLRES: pilih Polda -> Polres terafiliasi */}
+              {formData.role === 'POLRES' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="polda">Polda</Label>
+                    <Select value={formData.poldaId} onValueChange={(value) => setFormData({ ...formData, poldaId: value })}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih Polda" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <div className="p-2">
+                          <Input
+                            placeholder="Cari Polda..."
+                            value={poldaSearch}
+                            onChange={(e) => setPoldaSearch(e.target.value)}
+                            className="mb-2"
+                          />
+                        </div>
+                        {filteredPoldas.length > 0 ? filteredPoldas.map((p) => (
+                          <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                        )) : (
+                          <SelectItem value="loading" disabled>
+                            {poldaSearch ? "Tidak ditemukan" : "Loading..."}
+                          </SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="polres">Polres</Label>
+                    <Select value={formData.polresId} onValueChange={(value) => setFormData({ ...formData, polresId: value })} disabled={!formData.poldaId}>
+                    <SelectTrigger>
+                        <SelectValue placeholder={formData.poldaId ? "Pilih Polres" : "Pilih Polda dulu"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <div className="p-2">
+                          <Input
+                            placeholder="Cari Polres..."
+                            value={polresForFormSearch}
+                            onChange={(e) => setPolresForFormSearch(e.target.value)}
+                            className="mb-2"
+                          />
+                        </div>
+                        {filteredPolresForForm.length > 0 ? filteredPolresForForm.map((pr) => (
+                          <SelectItem key={pr.id} value={pr.id}>{pr.name}</SelectItem>
+                        )) : (
+                          <SelectItem value="loading" disabled>
+                            {formData.poldaId ? (polresForFormSearch ? "Tidak ditemukan" : "Loading...") : "Pilih Polda dulu"}
+                          </SelectItem>
+                        )}
+                    </SelectContent>
+                  </Select>
+                  </div>
+                </div>
+              )}
+
 
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>Batal</Button>
