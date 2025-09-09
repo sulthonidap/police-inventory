@@ -52,8 +52,8 @@ export async function GET(request: NextRequest) {
       transferred: assets.filter(a => a.status === 'TRANSFERRED').length,
       lost: assets.filter(a => a.status === 'LOST').length,
       retired: assets.filter(a => a.status === 'RETIRED').length,
-      digital: assets.filter(a => a.kind === 'DIGITAL').length,
-      physical: assets.filter(a => a.kind === 'BARANG').length
+      digital: assets.filter(a => a.kind === 'DIGITAL' as any).length,
+      physical: assets.filter(a => a.kind === 'BARANG' as any).length
     }
 
     // Get assets that need maintenance (example logic)

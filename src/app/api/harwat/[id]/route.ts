@@ -6,12 +6,13 @@ import { existsSync } from "fs"
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const harwat = await prisma.harwat.findUnique({
       where: {
-        id: params.id
+        id: id
       }
     })
 
@@ -34,9 +35,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const formData = await request.formData()
     const title = formData.get('title') as string
     const dateTime = formData.get('dateTime') as string
@@ -53,7 +55,7 @@ export async function PUT(
 
     // Check if harwat exists
     const existingHarwat = await prisma.harwat.findUnique({
-      where: { id: params.id }
+      where: { id: id }
     })
 
     if (!existingHarwat) {
@@ -113,7 +115,7 @@ export async function PUT(
     }
 
     const harwat = await prisma.harwat.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         title,
         dateTime: new Date(dateTime),
@@ -134,12 +136,13 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     // Check if harwat exists
     const existingHarwat = await prisma.harwat.findUnique({
-      where: { id: params.id }
+      where: { id: id }
     })
 
     if (!existingHarwat) {
@@ -165,7 +168,7 @@ export async function DELETE(
     }
 
     await prisma.harwat.delete({
-      where: { id: params.id }
+      where: { id: id }
     })
 
     return NextResponse.json({ message: "Data Harwat berhasil dihapus" })
