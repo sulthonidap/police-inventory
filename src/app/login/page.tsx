@@ -272,16 +272,7 @@ export default function LoginPage() {
         </Card>
 
         {/* Existing Admin Credentials */}
-        <Card className="mt-6 bg-blue-50 border-blue-200">
-          <CardContent className="p-4">
-            <h3 className="text-sm font-medium text-blue-800 mb-2">🔑 Existing Admin Credentials</h3>
-            <div className="space-y-1 text-xs text-blue-700">
-              <p><strong>Email:</strong> prod@polri.go.id</p>
-              <p><strong>Password:</strong> admin123456</p>
-              <p className="text-blue-600 mt-2">💡 Click "Create Test Admin" for instant access!</p>
-            </div>
-          </CardContent>
-        </Card>
+        
 
         {/* Footer */}
         <div className="text-center mt-8">
