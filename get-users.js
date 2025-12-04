@@ -3,7 +3,7 @@ const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient({
   datasources: {
     db: {
-      url: "mysql://police_admin:StrongPassword123!@103.13.206.9:3306/police_inventory"
+      url: "mysql://police-inventory:police-inventory@31.97.110.114:3308/police-inventory"
     }
   }
 })
@@ -11,7 +11,7 @@ const prisma = new PrismaClient({
 async function getUsers() {
   try {
     console.log('🔍 Fetching all approved users from production database...\n')
-    
+
     const users = await prisma.user.findMany({
       where: {
         status: 'APPROVED'
@@ -31,8 +31,8 @@ async function getUsers() {
     })
 
     console.log('📋 APPROVED USERS - LOGIN CREDENTIALS:\n')
-    console.log('=' .repeat(80))
-    
+    console.log('='.repeat(80))
+
     users.forEach((user, index) => {
       console.log(`${index + 1}. ${user.name}`)
       console.log(`   📧 Email: ${user.email}`)
@@ -43,11 +43,11 @@ async function getUsers() {
       console.log(`   🆔 ID: ${user.id}`)
       console.log('   ' + '-'.repeat(60))
     })
-    
+
     console.log(`\n🎯 Total Approved Users: ${users.length}`)
     console.log('\n💡 Note: All users use default password "admin123456"')
     console.log('🌐 Login at: https://police-inventory.vercel.app/')
-    
+
   } catch (error) {
     console.error('❌ Error:', error.message)
   } finally {
